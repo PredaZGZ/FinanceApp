@@ -1,0 +1,47 @@
+# Node / pnpm
+node_modules/
+.pnpm-store/
+pnpm-lock.yaml
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# Build outputs
+dist/
+build/
+apps/web/dist/
+apps/api/dist/
+apps/tauri-desktop/src-tauri/target/
+apps/tauri-desktop/target/
+
+# Tauri
+*.asar
+*.tar.gz
+*.app
+*.dmg
+*.exe
+*.AppImage
+*.deb
+*.rpm
+
+# Rust / Cargo
+target/
+Cargo.lock
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.*
