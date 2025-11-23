@@ -5,14 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev:web": "pnpm --filter web dev",
-    "dev:api": "pnpm --filter api dev",
-    "dev:desktop": "pnpm --filter tauri-desktop dev",
-    "dev": "pnpm -r --parallel --filter api --filter tauri-desktop dev",
-    "build:web": "pnpm --filter web build",
-    "build:api": "pnpm --filter api build",
-    "build:desktop": "pnpm --filter tauri-desktop build",
-    "build": "pnpm build:web && pnpm build:api && pnpm build:desktop"
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint"
   },
   "keywords": [],
   "author": "",
@@ -24,6 +19,7 @@
     "packages/*"
   ],
   "devDependencies": {
+    "turbo": "^2.6.1",
     "wait-on": "^9.0.3"
   }
 }
