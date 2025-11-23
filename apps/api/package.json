@@ -5,7 +5,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon --watch src --exec \"tsx --env-file=.env src/index.ts\"",
+    "dev": "nodemon --watch src -e ts,js,json --exec \"tsx src/index.ts\"",
     "build": "tsc",
     "start": "node dist/index.js"
   },
