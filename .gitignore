@@ -48,3 +48,6 @@ Thumbs.db
 
 # Turbo
 .turbo
+
+# tmp files
+tmp

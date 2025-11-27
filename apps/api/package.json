@@ -7,7 +7,9 @@
   "scripts": {
     "dev": "nodemon --watch src -e ts,js,json --exec \"tsx src/index.ts\"",
     "build": "tsc",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "import:revolut": "tsx src/scripts/import-revolut.ts",
+    "add:conversion": "tsx src/scripts/add-conversion-rates.ts"
   },
   "keywords": [],
   "author": "",
@@ -16,6 +18,7 @@
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^5.1.0",
+    "pdf-parse-fork": "^1.2.0",
     "zod": "^4.1.12"
   },
   "devDependencies": {
