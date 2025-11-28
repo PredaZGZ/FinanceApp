@@ -32,7 +32,7 @@ async function main() {
         const usdData = data.currencies?.find(c => c.currency === 'USD');
 
         if (!usdData) {
-            console.log('❌ No se encontró cuenta USD');
+            console.log('No se encontró cuenta USD');
             rl.close();
             return;
         }
@@ -43,7 +43,7 @@ async function main() {
         );
 
         if (topUps.length === 0) {
-            console.log('✅ Todos los top-ups ya tienen tasa de conversión o han sido omitidos');
+            console.log('Todos los top-ups ya tienen tasa de conversión o han sido omitidos');
             rl.close();
             return;
         }
@@ -53,27 +53,27 @@ async function main() {
         // Process each top-up
         for (const topUp of topUps) {
             console.log('─────────────────────────────────────────');
-            console.log(`📅 Fecha: ${topUp.date}`);
-            console.log(`💵 Valor USD: $${topUp.value.toFixed(2)}`);
+            console.log(`Fecha: ${topUp.date}`);
+            console.log(`Valor USD: $${topUp.value.toFixed(2)}`);
             console.log('');
 
             const answer = await question('¿Cuántos EUR te costó este depósito? (Escribe "no" si no es conversión, "skip" para saltar): ');
 
             if (answer.toLowerCase() === 'skip') {
-                console.log('⏭️  Saltado temporalmente\n');
+                console.log('Saltado temporalmente\n');
                 continue;
             }
 
             if (answer.toLowerCase() === 'no') {
                 topUp.skippedConversion = true;
-                console.log('🚫 Marcado como NO conversión\n');
+                console.log('Marcado como NO conversión\n');
                 continue;
             }
 
             const eurCost = parseFloat(parseFloat(answer).toFixed(2));
 
             if (isNaN(eurCost) || eurCost <= 0) {
-                console.log('❌ Valor inválido, omitiendo...\n');
+                console.log('Valor inválido, omitiendo...\n');
                 continue;
             }
 
@@ -84,21 +84,21 @@ async function main() {
             topUp.eurCost = eurCost;
             topUp.conversionRate = conversionRate;
 
-            console.log(`✅ Guardado: €${eurCost.toFixed(2)} → $${topUp.value.toFixed(2)}`);
-            console.log(`📊 Tasa de conversión: ${conversionRate.toFixed(4)} EUR/USD\n`);
+            console.log(`Guardado: €${eurCost.toFixed(2)} → $${topUp.value.toFixed(2)}`);
+            console.log(`Tasa de conversión: ${conversionRate.toFixed(4)} EUR/USD\n`);
         }
 
         // Save updated data
         fs.writeFileSync(DATA_PATH, JSON.stringify(data, null, 2));
 
         console.log('─────────────────────────────────────────');
-        console.log('💾 Datos guardados exitosamente!');
-        console.log(`📄 Archivo: ${DATA_PATH}`);
+        console.log('Datos guardados exitosamente!');
+        console.log(`Archivo: ${DATA_PATH}`);
 
         rl.close();
 
     } catch (error) {
-        console.error('❌ Error:', error);
+        console.error('Error:', error);
         rl.close();
     }
 }
