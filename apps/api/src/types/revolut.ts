@@ -48,6 +48,7 @@ export interface PortfolioItem {
 
 export interface StockTrade {
     date: string;
+    currency: 'EUR' | 'USD';
     symbol: string;
     type: 'Trade - Market';
     quantity: number;
@@ -60,10 +61,12 @@ export interface StockTrade {
 
 export interface CashTransfer {
     date: string;
+    currency: 'EUR' | 'USD';
     type: 'Cash top-up' | 'Cash withdrawal';
     value: number;
     fees: number;
     commission: number;
     eurCost?: number;           // How much EUR it cost (for USD deposits)
     conversionRate?: number;    // EUR/USD conversion rate
+    skippedConversion?: boolean; // If true, this transaction is not a currency conversion
 }

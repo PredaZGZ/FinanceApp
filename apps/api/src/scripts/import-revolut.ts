@@ -139,11 +139,17 @@ function parseTransactions(text: string, currency: 'EUR' | 'USD'): { stockTrades
 
     // Pattern for date: DD MMM YYYY HH:MM:SS GMT
     const datePattern = /(\d{2} \w{3} \d{4} \d{2}:\d{2}:\d{2} GMT)/g;
-    const dates = content.match(datePattern) || [];
+    const dateMatches = [...content.matchAll(datePattern)];
 
-    for (const date of dates) {
-        const dateIndex = content.indexOf(date);
-        const nextDateIndex = content.indexOf(dates[dates.indexOf(date) + 1] || 'ENDOFCONTENT', dateIndex + date.length);
+    for (let i = 0; i < dateMatches.length; i++) {
+        const match = dateMatches[i];
+        const date = match[1];
+        const dateIndex = match.index!;
+
+        // Find end of this transaction (start of next date or end of content)
+        const nextMatch = dateMatches[i + 1];
+        const nextDateIndex = nextMatch ? nextMatch.index! : content.length;
+
         const transactionText = content.substring(dateIndex + date.length, nextDateIndex).trim();
 
         // Cash top-up
@@ -152,6 +158,7 @@ function parseTransactions(text: string, currency: 'EUR' | 'USD'): { stockTrades
             if (valueMatch) {
                 cashTransfers.push({
                     date,
+                    currency,
                     type: 'Cash top-up',
                     value: parseFloat(valueMatch[1].replace(/,/g, '')),
                     fees: 0,
@@ -165,6 +172,7 @@ function parseTransactions(text: string, currency: 'EUR' | 'USD'): { stockTrades
             if (valueMatch) {
                 cashTransfers.push({
                     date,
+                    currency,
                     type: 'Cash withdrawal',
                     value: -parseFloat(valueMatch[1].replace(/,/g, '')),
                     fees: 0,
@@ -181,6 +189,7 @@ function parseTransactions(text: string, currency: 'EUR' | 'USD'): { stockTrades
                 const side = tradeMatch[4] === 'Sell' ? 'Sell' : 'Buy';
                 stockTrades.push({
                     date,
+                    currency,
                     symbol: tradeMatch[1],
                     type: 'Trade - Market',
                     quantity: parseFloat(tradeMatch[2]),
@@ -232,6 +241,48 @@ async function main() {
         const usdSummary = parseAccountSummary(data.text, 'USD');
         const usdPortfolio = parsePortfolio(data.text, 'USD');
         const { stockTrades: usdStockTrades, cashTransfers: usdCashTransfers } = parseTransactions(data.text, 'USD');
+
+        // Try to preserve existing conversion rates
+        try {
+            if (fs.existsSync(OUTPUT_PATH)) {
+                const existingData: RevolutStatement = JSON.parse(fs.readFileSync(OUTPUT_PATH, 'utf-8'));
+                const existingUsd = existingData.currencies.find(c => c.currency === 'USD');
+
+                if (existingUsd) {
+                    // Create a map of date+value -> conversion data
+                    const conversionMap = new Map<string, { eurCost?: number, conversionRate?: number, skippedConversion?: boolean }>();
+
+                    existingUsd.cashTransfers.forEach(t => {
+                        if ((t.conversionRate && t.eurCost) || t.skippedConversion) {
+                            const key = `${t.date}-${t.value}`;
+                            conversionMap.set(key, {
+                                eurCost: t.eurCost,
+                                conversionRate: t.conversionRate,
+                                skippedConversion: t.skippedConversion
+                            });
+                        }
+                    });
+
+                    // Apply to new data
+                    usdCashTransfers.forEach(t => {
+                        const key = `${t.date}-${t.value}`;
+                        const saved = conversionMap.get(key);
+                        if (saved) {
+                            if (saved.skippedConversion) {
+                                t.skippedConversion = true;
+                            } else {
+                                t.eurCost = saved.eurCost;
+                                t.conversionRate = saved.conversionRate;
+                            }
+                        }
+                    });
+
+                    console.log(`Preserved ${conversionMap.size} conversion rates/flags`);
+                }
+            }
+        } catch (e) {
+            console.warn('Could not preserve existing data:', e);
+        }
 
         currencies.push({
             currency: 'USD',
