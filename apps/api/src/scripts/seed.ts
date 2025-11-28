@@ -2,7 +2,7 @@ import pool from '../db/client';
 import fs from 'fs';
 import path from 'path';
 
-const DATA_PATH = path.resolve(__dirname, '../../tmp/revolut_data.json');
+const DATA_PATH = path.resolve(process.cwd(), './tmp/revolut_data.json');
 
 async function main() {
     const client = await pool.connect();
@@ -16,8 +16,12 @@ async function main() {
         const data = JSON.parse(rawData);
 
         console.log('Seeding database...');
+        console.log('(Skipping duplicates automatically)');
+        console.log('');
 
         await client.query('BEGIN');
+
+
 
         for (const currencyData of data.currencies) {
             const currency = currencyData.currency;
@@ -28,7 +32,8 @@ async function main() {
                 for (const trade of currencyData.stockTrades) {
                     await client.query(
                         `INSERT INTO stock_trades (id, date, currency, symbol, type, quantity, price, side, value, fees, commission, "updatedAt")
-                 VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())`,
+                 VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
+                 ON CONFLICT (date, currency, symbol, side, quantity, price) DO NOTHING`,
                         [
                             new Date(trade.date),
                             trade.currency,
@@ -51,7 +56,8 @@ async function main() {
                 for (const transfer of currencyData.cashTransfers) {
                     await client.query(
                         `INSERT INTO cash_transfers (id, date, currency, type, value, fees, commission, "eurCost", "conversionRate", "skippedConversion", "updatedAt")
-                 VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())`,
+                 VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
+                 ON CONFLICT (date, currency, type, value) DO NOTHING`,
                         [
                             new Date(transfer.date),
                             transfer.currency,
@@ -66,24 +72,6 @@ async function main() {
                     );
                 }
                 console.log(`- Inserted ${currencyData.cashTransfers.length} cash transfers`);
-            }
-
-            // Portfolio Items
-            if (currencyData.portfolio) {
-                for (const item of currencyData.portfolio) {
-                    await client.query(
-                        `INSERT INTO portfolio_items (id, currency, symbol, "companyName", quantity, value, "updatedAt")
-             VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, NOW())`,
-                        [
-                            currency,
-                            item.symbol,
-                            item.name,
-                            item.quantity,
-                            item.value
-                        ]
-                    );
-                }
-                console.log(`- Inserted ${currencyData.portfolio.length} portfolio items`);
             }
         }
 

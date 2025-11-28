@@ -1,20 +1,13 @@
-
-CREATE DATABASE IF NOT EXISTS "finance-app";
-
 -- CreateEnum (with IF NOT EXISTS check)
-DO $$ BEGIN
-    CREATE TYPE "Currency" AS ENUM ('EUR', 'USD');
+DO $$ BEGIN CREATE TYPE "Currency" AS ENUM ('EUR', 'USD');
 EXCEPTION
-    WHEN duplicate_object THEN null;
+WHEN duplicate_object THEN null;
 END $$;
-
 -- CreateEnum (with IF NOT EXISTS check)
-DO $$ BEGIN
-    CREATE TYPE "TradeSide" AS ENUM ('Buy', 'Sell');
+DO $$ BEGIN CREATE TYPE "TradeSide" AS ENUM ('Buy', 'Sell');
 EXCEPTION
-    WHEN duplicate_object THEN null;
+WHEN duplicate_object THEN null;
 END $$;
-
 -- CreateTable
 CREATE TABLE IF NOT EXISTS "stock_trades" (
     "id" TEXT NOT NULL,
@@ -30,10 +23,8 @@ CREATE TABLE IF NOT EXISTS "stock_trades" (
     "commission" DOUBLE PRECISION NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-
     CONSTRAINT "stock_trades_pkey" PRIMARY KEY ("id")
 );
-
 -- CreateTable
 CREATE TABLE IF NOT EXISTS "cash_transfers" (
     "id" TEXT NOT NULL,
@@ -48,6 +39,8 @@ CREATE TABLE IF NOT EXISTS "cash_transfers" (
     "skippedConversion" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-
     CONSTRAINT "cash_transfers_pkey" PRIMARY KEY ("id")
 );
+-- Add unique indexes to prevent duplicates
+CREATE UNIQUE INDEX IF NOT EXISTS stock_trades_unique_idx ON stock_trades (date, currency, symbol, side, quantity, price);
+CREATE UNIQUE INDEX IF NOT EXISTS cash_transfers_unique_idx ON cash_transfers (date, currency, type, value);

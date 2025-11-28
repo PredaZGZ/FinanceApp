@@ -1,4 +1,7 @@
 import { Pool } from 'pg';
+import loadEnv from '../utils/envLoader';
+
+loadEnv();
 
 const pool = new Pool({
     user: process.env.DB_USER,
