@@ -26,7 +26,7 @@ These components follow unified domain rules to allow consistent processing acro
 - **Web client** built with React + Vite
 - **Desktop client** written in Rust + Tauri v2 using the same web UI bundle
 - **iOS client** listed as supported in the product baseline
-- All clients share domain code via internal packages
+
 
 ## Architecture
 
@@ -37,12 +37,8 @@ Managed with pnpm workspaces:
 - `apps/web`: React + Vite frontend
 - `apps/api`: Node.js + Express + TypeScript backend
 - `apps/tauri-desktop`: Tauri v2 desktop shell wrapping the web bundle
-- `packages/core`: domain logic, shared types, validation schemas
-- `packages/db`: PostgreSQL access logic and schema helpers
-- `packages/ui`: shared UI primitives and design system
-- `packages/config`: configuration utilities
 
-This structure maintains deterministic builds, avoids duplication, and keeps the domain layer shared.
+This structure maintains deterministic builds and separates concerns between the API, the web client, and the desktop shell.
 
 ### Backend
 
