@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { createRequire } from 'module';
 import { fileURLToPath } from 'url';
-import type { RevolutStatement, CurrencyData, StockTrade, CashTransfer, PortfolioItem, AccountSummary } from '../types/revolut.js';
+import type { RevolutStatement, CurrencyData, StockTrade, CashTransfer, PortfolioItem, AccountSummary } from '../common/types/revolut.js';
 
 const require = createRequire(import.meta.url);
 const pdf = require('pdf-parse-fork');

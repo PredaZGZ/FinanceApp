@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import loadEnv from "./utils/envLoader";
+import loadEnv from "./common/utils/envLoader";
 
 loadEnv();
 const app = express();

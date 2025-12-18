@@ -1,4 +1,4 @@
-import pool from '../db/client';
+import pool from '../common/db/client';
 import fs from 'fs';
 import path from 'path';
 
