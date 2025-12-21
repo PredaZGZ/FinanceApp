@@ -1,10 +1,10 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { 
-  LayoutDashboard, 
-  LogOut, 
-  Settings, 
-  Menu, 
+import {
+  LayoutDashboard,
+  LogOut,
+  Settings,
+  Menu,
   X,
   PieChart,
   Wallet,
@@ -27,17 +27,17 @@ export default function MainLayout() {
   ];
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex">
+    <div className="h-screen w-full bg-background text-foreground flex overflow-hidden">
       {/* Mobile Overlay */}
       {isMobileMenuOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 md:hidden"
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
 
       {/* Sidebar */}
-      <aside 
+      <aside
         className={cn(
           "fixed inset-y-0 left-0 z-50 w-64 bg-sidebar border-r border-sidebar-border transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 flex flex-col",
           isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
@@ -50,27 +50,27 @@ export default function MainLayout() {
             </div>
             FinanceApp
           </div>
-          <Button 
-            variant="ghost" 
-            size="icon" 
+          <Button
+            variant="ghost"
+            size="icon"
             className="ml-auto md:hidden text-sidebar-foreground hover:bg-sidebar-accent"
             onClick={() => setIsMobileMenuOpen(false)}
           >
             <X className="h-5 w-5" />
           </Button>
         </div>
-        
+
         <nav className="flex-1 flex flex-col gap-1 p-4">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (
               <Link key={item.path} to={item.path} onClick={() => setIsMobileMenuOpen(false)}>
-                <Button 
+                <Button
                   variant="ghost"
                   className={cn(
                     "w-full justify-start gap-3 font-medium transition-all duration-200",
-                    isActive 
-                      ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm" 
+                    isActive
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
                       : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
                   )}
                 >
@@ -96,9 +96,9 @@ export default function MainLayout() {
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-background">
         <header className="h-16 border-b border-border flex items-center justify-between px-4 md:px-8 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-30">
           <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              size="icon" 
+            <Button
+              variant="ghost"
+              size="icon"
               className="md:hidden -ml-2 text-muted-foreground"
               onClick={() => setIsMobileMenuOpen(true)}
             >
@@ -114,9 +114,9 @@ export default function MainLayout() {
             </div>
           </div>
         </header>
-        
-        <div className="flex-1 overflow-auto p-4 md:p-8">
-          <div className="max-w-6xl mx-auto">
+
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="max-w-6xl mx-auto w-full h-full">
             <Outlet />
           </div>
         </div>
