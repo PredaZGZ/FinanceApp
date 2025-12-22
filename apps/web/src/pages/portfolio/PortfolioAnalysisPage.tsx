@@ -1,0 +1,105 @@
+import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { type Holding, portfolioService } from "@/lib/services/portfolio";
+import { PortfolioBreakdown } from "@/components/portfolio/PortfolioBreakdown";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
+
+export default function PortfolioAnalysisPage() {
+    const { symbol } = useParams<{ symbol: string }>();
+    const navigate = useNavigate();
+    const [holding, setHolding] = useState<Holding | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [method, setMethod] = useState<string>("FIFO");
+
+    useEffect(() => {
+        if (!symbol) return;
+
+        const fetchAnalysis = async () => {
+            setLoading(true);
+            try {
+                const data = await portfolioService.getAnalysis(symbol, method);
+                setHolding(data);
+                setError(null);
+            } catch (err) {
+                setError("Failed to load analysis");
+                console.error(err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchAnalysis();
+    }, [symbol, method]);
+
+    if (loading) {
+        return <div className="p-8">Loading analysis...</div>;
+    }
+
+    if (error || !holding) {
+        return <div className="p-8 text-red-500">{error || "Holding not found"}</div>;
+    }
+
+    return (
+        <div className="space-y-6 p-8">
+            <div className="flex items-center gap-4">
+                <Button variant="outline" size="icon" onClick={() => navigate("/portfolio")}>
+                    <ArrowLeft className="h-4 w-4" />
+                </Button>
+                <h1 className="text-3xl font-bold tracking-tight">{symbol} Analysis</h1>
+            </div>
+
+            <div className="flex gap-4 mb-6">
+                <select
+                    className="h-10 w-[180px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 text-foreground"
+                    value={method}
+                    onChange={(e) => setMethod(e.target.value)}
+                    style={{ colorScheme: "dark" }}
+                >
+                    <option value="FIFO">FIFO</option>
+                    <option value="WeightedAverage">Weighted Average</option>
+                </select>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-3">
+                <Card>
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium">Realized Gain</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className={`text-2xl font-bold ${holding.realizedGain >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                            {holding.realizedGain >= 0 ? '+' : ''}€{holding.realizedGain.toFixed(2)}
+                        </div>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium">Remaining Shares</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{holding.remainingShares}</div>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium">Avg Cost</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">€{holding.averageCost.toFixed(2)}</div>
+                    </CardContent>
+                </Card>
+            </div>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Tax Lot Breakdown ({method})</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <PortfolioBreakdown breakdown={holding.breakdown || []} />
+                </CardContent>
+            </Card>
+        </div>
+    );
+}

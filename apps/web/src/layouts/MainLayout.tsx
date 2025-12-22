@@ -9,7 +9,8 @@ import {
   PieChart,
   Wallet,
   ArrowRightLeft,
-  TrendingUp
+  TrendingUp,
+  LineChart
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -20,6 +21,7 @@ export default function MainLayout() {
 
   const navItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/" },
+    { icon: LineChart, label: "Portfolio", path: "/portfolio" },
     { icon: Wallet, label: "Accounts", path: "/accounts" },
     { icon: ArrowRightLeft, label: "Transactions", path: "/transactions" },
     { icon: PieChart, label: "Reports", path: "/reports" },

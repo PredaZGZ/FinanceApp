@@ -3,6 +3,8 @@ import AuthLayout from "@/layouts/AuthLayout";
 import MainLayout from "@/layouts/MainLayout";
 import LoginPage from "@/pages/auth/LoginPage";
 import DashboardPage from "@/pages/dashboard/DashboardPage";
+import PortfolioPage from "@/pages/portfolio/PortfolioPage";
+import PortfolioAnalysisPage from "@/pages/portfolio/PortfolioAnalysisPage";
 
 import { transactionsRoutes } from "./transactions.routes";
 
@@ -26,6 +28,19 @@ const router = createBrowserRouter([
         element: <DashboardPage />,
       },
       ...transactionsRoutes,
+      {
+        path: "portfolio",
+        children: [
+          {
+            path: "",
+            element: <PortfolioPage />,
+          },
+          {
+            path: ":symbol",
+            element: <PortfolioAnalysisPage />,
+          }
+        ]
+      },
     ],
   },
   {
