@@ -88,7 +88,9 @@ export class PortfolioController {
                 method,
                 totalRealizedGain,
                 totalCostBasis,
-                holdings: results.filter(r => r.remainingShares > 0 || r.realizedGain !== 0) // Show active or realized
+                holdings: results
+                    .filter(r => r.remainingShares > 0 || r.realizedGain !== 0)
+                    .map(({ breakdown, ...rest }) => rest) // Exclude breakdown from summary to reduce payload size
             });
 
         } catch (error) {

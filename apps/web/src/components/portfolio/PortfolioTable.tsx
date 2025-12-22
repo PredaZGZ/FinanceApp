@@ -15,8 +15,8 @@ interface PortfolioTableProps {
 
 export function PortfolioTable({ holdings }: PortfolioTableProps) {
     return (
-        <div className="rounded-md border">
-            <Table>
+        <div className="rounded-md border overflow-x-auto">
+            <Table className="min-w-[600px]">
                 <TableHeader>
                     <TableRow>
                         <TableHead>Symbol</TableHead>

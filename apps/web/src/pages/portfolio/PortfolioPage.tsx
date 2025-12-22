@@ -28,21 +28,13 @@ export default function PortfolioPage() {
         fetchSummary();
     }, [method]);
 
-    if (loading) {
-        return <div className="p-8">Loading portfolio...</div>;
-    }
-
-    if (error) {
-        return <div className="p-8 text-red-500">{error}</div>;
-    }
-
     return (
         <div className="space-y-6 p-8">
             <div className="flex items-center justify-between">
                 <h1 className="text-3xl font-bold tracking-tight">Portfolio Overview</h1>
                 <div className="flex gap-4">
                     <select
-                        className="h-10 w-[180px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 text-foreground"
+                        className="h-10 w-[180px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 text-foreground text-center"
                         value={method}
                         onChange={(e) => setMethod(e.target.value)}
                         style={{ colorScheme: "dark" }}
@@ -53,19 +45,25 @@ export default function PortfolioPage() {
                 </div>
             </div>
 
-            {summary && (
-                <>
-                    <PortfolioSummaryCards summary={summary} />
+            {(loading && !summary) ? (
+                <div className="p-8">Loading portfolio...</div>
+            ) : (
+                summary && (
+                    <>
+                        <div className={loading ? "opacity-50 pointer-events-none transition-opacity" : "transition-opacity"}>
+                            <PortfolioSummaryCards summary={summary} />
+                        </div>
 
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Holdings</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <PortfolioTable holdings={summary.holdings} />
-                        </CardContent>
-                    </Card>
-                </>
+                        <Card className={loading ? "opacity-50 pointer-events-none transition-opacity" : "transition-opacity"}>
+                            <CardHeader>
+                                <CardTitle>Holdings</CardTitle>
+                            </CardHeader>
+                            <CardContent className="overflow-x-auto">
+                                <PortfolioTable holdings={summary.holdings} />
+                            </CardContent>
+                        </Card>
+                    </>
+                )
             )}
         </div>
     );

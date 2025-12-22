@@ -34,14 +34,6 @@ export default function PortfolioAnalysisPage() {
         fetchAnalysis();
     }, [symbol, method]);
 
-    if (loading) {
-        return <div className="p-8">Loading analysis...</div>;
-    }
-
-    if (error || !holding) {
-        return <div className="p-8 text-red-500">{error || "Holding not found"}</div>;
-    }
-
     return (
         <div className="space-y-6 p-8">
             <div className="flex items-center gap-4">
@@ -53,7 +45,7 @@ export default function PortfolioAnalysisPage() {
 
             <div className="flex gap-4 mb-6">
                 <select
-                    className="h-10 w-[180px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 text-foreground"
+                    className="h-10 w-[180px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 text-foreground text-center"
                     value={method}
                     onChange={(e) => setMethod(e.target.value)}
                     style={{ colorScheme: "dark" }}
@@ -63,43 +55,51 @@ export default function PortfolioAnalysisPage() {
                 </select>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-3">
-                <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium">Realized Gain</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className={`text-2xl font-bold ${holding.realizedGain >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                            {holding.realizedGain >= 0 ? '+' : ''}€{holding.realizedGain.toFixed(2)}
+            {(loading && !holding) ? (
+                <div className="p-8">Loading analysis...</div>
+            ) : (
+                holding && (
+                    <div className={loading ? "opacity-50 pointer-events-none transition-opacity" : "transition-opacity"}>
+                        <div className="grid gap-4 md:grid-cols-3">
+                            <Card>
+                                <CardHeader className="pb-2">
+                                    <CardTitle className="text-sm font-medium">Realized Gain</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className={`text-2xl font-bold ${holding.realizedGain >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                                        {holding.realizedGain >= 0 ? '+' : ''}€{holding.realizedGain.toFixed(2)}
+                                    </div>
+                                </CardContent>
+                            </Card>
+                            <Card>
+                                <CardHeader className="pb-2">
+                                    <CardTitle className="text-sm font-medium">Remaining Shares</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-2xl font-bold">{holding.remainingShares}</div>
+                                </CardContent>
+                            </Card>
+                            <Card>
+                                <CardHeader className="pb-2">
+                                    <CardTitle className="text-sm font-medium">Avg Cost</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-2xl font-bold">€{holding.averageCost.toFixed(2)}</div>
+                                </CardContent>
+                            </Card>
                         </div>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium">Remaining Shares</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{holding.remainingShares}</div>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium">Avg Cost</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">€{holding.averageCost.toFixed(2)}</div>
-                    </CardContent>
-                </Card>
-            </div>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>Tax Lot Breakdown ({method})</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <PortfolioBreakdown breakdown={holding.breakdown || []} />
-                </CardContent>
-            </Card>
+                        <Card className="mt-6">
+                            <CardHeader>
+                                <CardTitle>Tax Lot Breakdown ({method})</CardTitle>
+                            </CardHeader>
+                            <CardContent className="overflow-x-auto">
+                                <PortfolioBreakdown breakdown={holding.breakdown || []} />
+                            </CardContent>
+                        </Card>
+                    </div>
+                )
+            )}
         </div>
     );
 }
