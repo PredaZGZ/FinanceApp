@@ -37,27 +37,32 @@ async function main() {
             return;
         }
 
-        // Filter only top-ups without conversion rate and not skipped
-        const topUps = usdData.cashTransfers.filter(
-            t => t.type === 'Cash top-up' && !t.conversionRate && !t.skippedConversion
+        // Filter top-ups and withdrawals without conversion rate and not skipped
+        const transfers = usdData.cashTransfers.filter(
+            t => (t.type === 'Cash top-up' || t.type === 'Cash withdrawal') && !t.conversionRate && !t.skippedConversion
         );
 
-        if (topUps.length === 0) {
-            console.log('Todos los top-ups ya tienen tasa de conversión o han sido omitidos');
+        if (transfers.length === 0) {
+            console.log('Todos los top-ups/withdrawals ya tienen tasa de conversión o han sido omitidos');
             rl.close();
             return;
         }
 
-        console.log(`Encontrados ${topUps.length} top-ups sin tasa de conversión\n`);
+        console.log(`Encontrados ${transfers.length} movimientos sin tasa de conversión\n`);
 
-        // Process each top-up
-        for (const topUp of topUps) {
+        // Process each transfer
+        for (const transfer of transfers) {
             console.log('─────────────────────────────────────────');
-            console.log(`Fecha: ${topUp.date}`);
-            console.log(`Valor USD: $${topUp.value.toFixed(2)}`);
+            console.log(`Fecha: ${transfer.date}`);
+            console.log(`Tipo: ${transfer.type}`);
+            console.log(`Valor USD: $${transfer.value.toFixed(2)}`);
             console.log('');
 
-            const answer = await question('¿Cuántos EUR te costó este depósito? (Escribe "no" si no es conversión, "skip" para saltar): ');
+            const promptText = transfer.type === 'Cash top-up'
+                ? '¿Cuántos EUR te costó este depósito? (Escribe "no" si no es conversión, "skip" para saltar): '
+                : '¿Cuántos EUR recibiste por este retiro? (Escribe "no" si no es conversión, "skip" para saltar): ';
+
+            const answer = await question(promptText);
 
             if (answer.toLowerCase() === 'skip') {
                 console.log('Saltado temporalmente\n');
@@ -65,26 +70,27 @@ async function main() {
             }
 
             if (answer.toLowerCase() === 'no') {
-                topUp.skippedConversion = true;
+                transfer.skippedConversion = true;
                 console.log('Marcado como NO conversión\n');
                 continue;
             }
 
-            const eurCost = parseFloat(parseFloat(answer).toFixed(2));
+            const eurValue = parseFloat(parseFloat(answer).toFixed(2));
 
-            if (isNaN(eurCost) || eurCost <= 0) {
+            if (isNaN(eurValue) || eurValue <= 0) {
                 console.log('Valor inválido, omitiendo...\n');
                 continue;
             }
 
             // Calculate conversion rate (EUR/USD)
-            // Round to 4 decimals for precision, while keeping it clean
-            const conversionRate = parseFloat((eurCost / topUp.value).toFixed(4));
+            // For top-up (positive USD): Rate = EUR / USD
+            // For withdrawal (negative USD): Rate = EUR / |USD|
+            const conversionRate = parseFloat((eurValue / Math.abs(transfer.value)).toFixed(4));
 
-            topUp.eurCost = eurCost;
-            topUp.conversionRate = conversionRate;
+            transfer.eurCost = eurValue; // Or eurReceived, using same field for simplicity
+            transfer.conversionRate = conversionRate;
 
-            console.log(`Guardado: €${eurCost.toFixed(2)} → $${topUp.value.toFixed(2)}`);
+            console.log(`Guardado: €${eurValue.toFixed(2)} ↔ $${Math.abs(transfer.value).toFixed(2)}`);
             console.log(`Tasa de conversión: ${conversionRate.toFixed(4)} EUR/USD\n`);
         }
 

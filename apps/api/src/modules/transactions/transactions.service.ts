@@ -72,6 +72,21 @@ export class TransactionsService {
             },
         };
     }
+
+    async getExchangeRates() {
+        const query = `
+            SELECT date, "conversionRate", currency
+            FROM cash_transfers
+            WHERE "conversionRate" IS NOT NULL
+            ORDER BY date ASC
+        `;
+        const result = await pool.query(query);
+        return result.rows.map(row => ({
+            date: new Date(row.date),
+            rate: parseFloat(row.conversionRate),
+            currency: row.currency // This is usually the source currency (e.g. USD topup converted from EUR)
+        }));
+    }
 }
 
 export const transactionsService = new TransactionsService();
