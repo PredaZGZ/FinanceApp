@@ -103,6 +103,8 @@ export class PortfolioService {
         let realizedGain = 0;
         let averageCost = 0;
 
+        const breakdown: TradeMatch[] = [];
+
         for (const trade of sortedTrades) {
             if (trade.side === 'Buy') {
                 const tradeCost = (trade.price * trade.quantity) + (trade.fees || 0) + (trade.commission || 0);
@@ -118,8 +120,19 @@ export class PortfolioService {
 
                 // Net Proceeds = (Price * Quantity) - Fees - Commission
                 const netProceeds = (trade.quantity * trade.price) - (trade.fees || 0) - (trade.commission || 0);
+                const gain = netProceeds - costOfSoldShares;
 
-                realizedGain += (netProceeds - costOfSoldShares);
+                realizedGain += gain;
+
+                // Add to breakdown
+                breakdown.push({
+                    sellDate: trade.date,
+                    quantitySold: trade.quantity,
+                    sellPrice: trade.price,
+                    buyDate: trade.date, // For Weighted Average, we don't have a specific buy date. Using sell date or "Various" logic.
+                    buyPrice: averageCost, // The average cost at the time of sale
+                    gain: gain
+                });
 
                 totalShares -= trade.quantity;
                 totalCost -= costOfSoldShares;
@@ -139,7 +152,8 @@ export class PortfolioService {
             averageCost,
             totalCostBasis: totalCost,
             remainingShares: totalShares,
-            realizedGain
+            realizedGain,
+            breakdown
         };
     }
 

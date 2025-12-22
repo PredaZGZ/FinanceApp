@@ -7,20 +7,16 @@ export class PortfolioController {
     async getPortfolioAnalysis(req: Request, reqRes: Response) {
         try {
             const { symbol } = req.params;
-            const { method = 'FIFO', currency = 'USD' } = req.query;
+            const { method = 'FIFO' } = req.query;
 
             if (!symbol) {
                 return reqRes.status(400).json({ error: 'Symbol is required' });
             }
 
-            // Fetch all trades for this symbol
-            // We need to extend transactionsService to get all trades without pagination for calculation
-            // For now, let's assume we can get them. We might need to add a method to transactionsService.
+            // Fetch all trades for this symbol, regardless of currency
             const tradesResult = await transactionsService.getTransactions({
                 symbol: symbol as string,
-                currency: currency as 'EUR' | 'USD',
-                limit: 10000, // Fetch enough to calculate. Ideally this should be a stream or specialized query.
-                // TODO: For scalability with massive datasets, implement streaming or database-side aggregation where possible.
+                limit: 10000,
                 page: 1
             });
 
