@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, ArrowUpDown } from "lucide-react";
+import { formatDate } from "@/lib/utils";
 
 interface Transaction {
     id: string;
@@ -108,13 +109,6 @@ export default function TransactionsPage() {
         return <div className="p-8 text-center text-red-500">{error}</div>;
     }
 
-    const formatDate = (dateString: string) => {
-        const date = new Date(dateString);
-        const day = date.getDate().toString().padStart(2, "0");
-        const month = (date.getMonth() + 1).toString().padStart(2, "0");
-        const year = date.getFullYear();
-        return `${day}-${month}-${year}`;
-    };
 
     const formatTime = (dateString: string) => {
         const date = new Date(dateString);
@@ -223,7 +217,7 @@ export default function TransactionsPage() {
                     <TableBody>
                         {sortedData.map((tx) => (
                             <TableRow key={tx.id}>
-                                <TableCell>{formatDate(tx.date)}</TableCell>
+                                <TableCell className="font-mono">{formatDate(tx.date)}</TableCell>
                                 <TableCell className="text-muted-foreground">
                                     {formatTime(tx.date)}
                                 </TableCell>

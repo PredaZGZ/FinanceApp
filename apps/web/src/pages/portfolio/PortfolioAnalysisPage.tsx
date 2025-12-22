@@ -4,6 +4,13 @@ import { type Holding, portfolioService } from "@/lib/services/portfolio";
 import { PortfolioBreakdown } from "@/components/portfolio/PortfolioBreakdown";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { ArrowLeft } from "lucide-react";
 
 export default function PortfolioAnalysisPage() {
@@ -44,15 +51,15 @@ export default function PortfolioAnalysisPage() {
             </div>
 
             <div className="flex gap-4 mb-6">
-                <select
-                    className="h-10 w-[180px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 text-foreground text-center"
-                    value={method}
-                    onChange={(e) => setMethod(e.target.value)}
-                    style={{ colorScheme: "dark" }}
-                >
-                    <option value="FIFO">FIFO</option>
-                    <option value="WeightedAverage">Weighted Average</option>
-                </select>
+                <Select value={method} onValueChange={setMethod}>
+                    <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Select method" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="FIFO">FIFO</SelectItem>
+                        <SelectItem value="WeightedAverage">Weighted Average</SelectItem>
+                    </SelectContent>
+                </Select>
             </div>
 
             {(loading && !holding) ? (

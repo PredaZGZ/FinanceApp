@@ -7,6 +7,7 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import type { BreakdownItem } from "@/lib/services/portfolio";
+import { formatDate } from "@/lib/utils";
 
 interface PortfolioBreakdownProps {
     breakdown: BreakdownItem[];
@@ -33,10 +34,10 @@ export function PortfolioBreakdown({ breakdown }: PortfolioBreakdownProps) {
                 <TableBody>
                     {breakdown.map((item, index) => (
                         <TableRow key={index}>
-                            <TableCell>{new Date(item.sellDate).toLocaleDateString()}</TableCell>
+                            <TableCell className="font-mono">{formatDate(item.sellDate)}</TableCell>
                             <TableCell className="text-right">{item.quantitySold.toFixed(4)}</TableCell>
                             <TableCell className="text-right">€{item.sellPrice.toFixed(2)}</TableCell>
-                            <TableCell>{new Date(item.buyDate).toLocaleDateString()}</TableCell>
+                            <TableCell className="font-mono">{formatDate(item.buyDate)}</TableCell>
                             <TableCell className="text-right">€{item.buyPrice.toFixed(2)}</TableCell>
                             <TableCell className={`text-right ${item.gain >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                                 {item.gain > 0 ? '+' : ''}€{item.gain.toFixed(2)}
