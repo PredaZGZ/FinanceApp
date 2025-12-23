@@ -9,6 +9,8 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "import:revolut": "tsx src/scripts/import-revolut.ts",
+    "import:myinvestor": "tsx src/scripts/import-myinvestor.ts",
+    "verify:myinvestor": "tsx src/scripts/verify-myinvestor.ts",
     "add:conversion": "tsx src/scripts/add-conversion-rates.ts",
     "db:seed": "tsx src/scripts/seed.ts"
   },
