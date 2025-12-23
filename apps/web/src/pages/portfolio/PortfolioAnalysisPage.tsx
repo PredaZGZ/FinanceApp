@@ -18,7 +18,7 @@ export default function PortfolioAnalysisPage() {
     const navigate = useNavigate();
     const [holding, setHolding] = useState<Holding | null>(null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const [_, setError] = useState<string | null>(null);
     const [method, setMethod] = useState<string>("FIFO");
 
     useEffect(() => {

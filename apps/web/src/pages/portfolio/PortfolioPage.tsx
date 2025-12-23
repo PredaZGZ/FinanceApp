@@ -14,7 +14,7 @@ import {
 export default function PortfolioPage() {
     const [summary, setSummary] = useState<PortfolioSummary | null>(null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const [_, setError] = useState<string | null>(null);
     const [method, setMethod] = useState<string>("FIFO");
 
     useEffect(() => {

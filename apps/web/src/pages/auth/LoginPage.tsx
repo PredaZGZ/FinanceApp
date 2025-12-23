@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { config } from "@/lib/config";
@@ -45,7 +45,7 @@ export default function LoginPage() {
             </p>
           </div>
         </div>
-        
+
         {/* Subtle Background Elements */}
         <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-secondary/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
@@ -68,11 +68,11 @@ export default function LoginPage() {
                   <Label htmlFor="email">Email</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                      id="email" 
-                      type="email" 
-                      placeholder="name@example.com" 
-                      required 
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="name@example.com"
+                      required
                       className="pl-10 h-11 bg-secondary/50 border-transparent focus:border-primary focus:ring-1 focus:ring-primary transition-all"
                     />
                   </div>
@@ -80,8 +80,8 @@ export default function LoginPage() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="password">Password</Label>
-                    <Link 
-                      to="/forgot-password" 
+                    <Link
+                      to="/forgot-password"
                       className="text-xs font-medium text-muted-foreground hover:text-primary transition-colors"
                     >
                       Forgot password?
@@ -89,10 +89,10 @@ export default function LoginPage() {
                   </div>
                   <div className="relative">
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                      id="password" 
-                      type="password" 
-                      required 
+                    <Input
+                      id="password"
+                      type="password"
+                      required
                       className="pl-10 h-11 bg-secondary/50 border-transparent focus:border-primary focus:ring-1 focus:ring-primary transition-all"
                     />
                   </div>
@@ -112,7 +112,7 @@ export default function LoginPage() {
 
               {config.ENABLE_AUTH_BYPASS && (
                 <div className="w-full pt-6 mt-2 border-t border-border/50">
-                  <button 
+                  <button
                     onClick={handleBypass}
                     className="w-full flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-primary transition-colors py-2"
                   >

@@ -6,6 +6,7 @@ import DashboardPage from "@/pages/dashboard/DashboardPage";
 import PortfolioPage from "@/pages/portfolio/PortfolioPage";
 import PortfolioAnalysisPage from "@/pages/portfolio/PortfolioAnalysisPage";
 
+import ImportPage from "@/pages/import-data/ImportPage";
 import { transactionsRoutes } from "./transactions.routes";
 
 const router = createBrowserRouter([
@@ -26,6 +27,10 @@ const router = createBrowserRouter([
       {
         path: "",
         element: <DashboardPage />,
+      },
+      {
+        path: "import",
+        element: <ImportPage />,
       },
       ...transactionsRoutes,
       {

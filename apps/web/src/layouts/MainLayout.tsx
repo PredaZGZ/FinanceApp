@@ -10,7 +10,8 @@ import {
   Wallet,
   ArrowRightLeft,
   TrendingUp,
-  LineChart
+  LineChart,
+  Upload
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -25,6 +26,7 @@ export default function MainLayout() {
     { icon: Wallet, label: "Accounts", path: "/accounts" },
     { icon: ArrowRightLeft, label: "Transactions", path: "/transactions" },
     { icon: PieChart, label: "Reports", path: "/reports" },
+    { icon: Upload, label: "Import Data", path: "/import" },
     { icon: Settings, label: "Settings", path: "/settings" },
   ];
 
