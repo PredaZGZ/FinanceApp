@@ -87,6 +87,52 @@ export class TransactionsService {
             currency: row.currency // This is usually the source currency (e.g. USD topup converted from EUR)
         }));
     }
+
+    async findPendingConversions() {
+        const query = `
+            SELECT id, date, currency, type, value
+            FROM cash_transfers
+            WHERE type IN ('Cash top-up', 'Deposit')
+              AND currency != 'EUR'
+              AND "conversionRate" IS NULL
+              AND ("skippedConversion" IS NULL OR "skippedConversion" = false)
+            ORDER BY date DESC
+        `;
+        const result = await pool.query(query);
+        return result.rows;
+    }
+
+    async updateTransactionConversion(id: string, eurCost: number) {
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+
+            // Get transaction to calculate rate
+            const txRes = await client.query('SELECT value, currency FROM cash_transfers WHERE id = $1', [id]);
+            if (txRes.rows.length === 0) {
+                throw new Error('Transaction not found');
+            }
+            const tx = txRes.rows[0];
+
+            // Calculate rate: EUR / USD (e.g. 100 EUR / 110 USD = 0.909)
+            // Storing rate as EUR per 1 unit of foreign currency
+            const rate = eurCost / Math.abs(tx.value);
+
+            await client.query(`
+                UPDATE cash_transfers
+                SET "eurCost" = $1, "conversionRate" = $2, "updatedAt" = NOW()
+                WHERE id = $3
+            `, [eurCost, rate, id]);
+
+            await client.query('COMMIT');
+            return { id, eurCost, conversionRate: rate };
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
+        }
+    }
 }
 
 export const transactionsService = new TransactionsService();

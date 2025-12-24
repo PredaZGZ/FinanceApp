@@ -13,3 +13,15 @@ export const getTransactionsSchema = z.object({
 });
 
 export type GetTransactionsQuery = z.infer<typeof getTransactionsSchema>['query'];
+
+export const updateConversionSchema = z.object({
+    body: z.object({
+        eurCost: z.number().positive(),
+    }),
+    params: z.object({
+        id: z.string().uuid(),
+    }),
+});
+
+export type UpdateConversionBody = z.infer<typeof updateConversionSchema>['body'];
+export type UpdateConversionParams = z.infer<typeof updateConversionSchema>['params'];

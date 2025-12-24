@@ -50,7 +50,7 @@ export interface StockTrade {
     date: string;
     currency: 'EUR' | 'USD';
     symbol: string;
-    type: 'Trade - Market';
+    type: 'Trade - Market' | 'Trade - Limit';
     quantity: number;
     price: number;
     side: 'Buy' | 'Sell';
@@ -62,7 +62,7 @@ export interface StockTrade {
 export interface CashTransfer {
     date: string;
     currency: 'EUR' | 'USD';
-    type: 'Cash top-up' | 'Cash withdrawal';
+    type: 'Cash top-up' | 'Cash withdrawal' | 'Dividend' | 'Custody Fee';
     value: number;
     fees: number;
     commission: number;
