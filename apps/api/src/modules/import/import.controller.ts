@@ -1,6 +1,5 @@
 import { Request, Response } from 'express';
-import { revolutService } from '../../services/revolut.service';
-import { myInvestorService } from '../../services/myinvestor.service';
+import { importService } from './import.service';
 
 export class ImportController {
     async importRevolut(req: Request, res: Response) {
@@ -9,13 +8,11 @@ export class ImportController {
                 return res.status(400).json({ error: 'No file uploaded. Ensure the form-data field name is "file".' });
             }
 
-            const statement = await revolutService.parseStatement(req.file.buffer);
-            await revolutService.saveToDb(statement);
-
-            res.json({ message: 'Revolut data imported successfully', data: statement });
-        } catch (error) {
+            const data = await importService.importRevolut(req.file.buffer, req.file.originalname);
+            res.json({ message: 'Revolut data imported successfully', data });
+        } catch (error: any) {
             console.error('Error importing Revolut data:', error);
-            res.status(500).json({ error: 'Failed to import Revolut data' });
+            res.status(500).json({ error: error.message || 'Failed to import Revolut data' });
         }
     }
 
@@ -29,15 +26,26 @@ export class ImportController {
                 return res.status(400).json({ error: 'Movements file is required (field name: "movements")' });
             }
 
-            const result = await myInvestorService.processFiles(
+            const data = await importService.importMyInvestor(
                 movementsFile.buffer,
-                ordersFile?.buffer
+                ordersFile?.buffer,
+                movementsFile.originalname
             );
 
-            res.json({ message: 'MyInvestor data imported successfully', data: result });
+            res.json({ message: 'MyInvestor data imported successfully', data });
         } catch (error) {
             console.error('Error importing MyInvestor data:', error);
             res.status(500).json({ error: 'Failed to import MyInvestor data' });
+        }
+    }
+
+    async getImportStatus(req: Request, res: Response) {
+        try {
+            const status = await importService.getImportStatus();
+            res.json(status);
+        } catch (error) {
+            console.error('Error fetching import status:', error);
+            res.status(500).json({ error: 'Failed to fetch import status' });
         }
     }
 }

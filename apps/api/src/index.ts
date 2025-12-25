@@ -10,9 +10,13 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+import { errorHandler } from "./common/middleware/errorHandler";
+
 // Routes
 app.get("/health", (_req, res) => res.json({ ok: true }));
 app.use("/", mainRouter);
+
+app.use(errorHandler);
 
 // Start server
 const PORT = process.env.PORT;

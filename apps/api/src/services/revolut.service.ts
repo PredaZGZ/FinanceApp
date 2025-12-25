@@ -3,11 +3,18 @@ import type { RevolutStatement, CurrencyData, StockTrade, CashTransfer, Portfoli
 import pool from '../common/db/client';
 
 const require = createRequire(import.meta.url);
-const pdf = require('pdf-parse-fork');
+
+const pdf = require('pdf-parse');
 
 export class RevolutService {
     async parseStatement(buffer: Buffer): Promise<RevolutStatement> {
-        const data = await pdf(buffer);
+        let data;
+        try {
+            data = await pdf(buffer);
+        } catch (error: any) {
+            console.error('PDF Parse Error:', error);
+            throw new Error(`Failed to parse PDF: ${error.message}`);
+        }
         const text = data.text;
 
         const accountInfo = this.parseAccountInfo(text);
