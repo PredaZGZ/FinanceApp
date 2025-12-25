@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, ArrowUpDown } from "lucide-react";
 import { formatDate } from "@/lib/utils";
+import PendingConversions from "./components/PendingConversions";
 
 interface Transaction {
     id: string;
@@ -51,30 +52,33 @@ export default function TransactionsPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [sortConfig, setSortConfig] = useState<SortConfig>(null);
+    const [activeTab, setActiveTab] = useState<"list" | "pending">("list");
 
     const page = parseInt(searchParams.get("page") || "1", 10);
     const limit = parseInt(searchParams.get("limit") || "50", 10);
 
     useEffect(() => {
-        const loadTransactions = async () => {
-            setLoading(true);
-            setError(null);
-            try {
-                const response = await fetchAPI<TransactionsResponse>(
-                    `/transactions?page=${page}&limit=${limit}`
-                );
-                setData(response.data);
-                setMeta(response.meta);
-            } catch (err) {
-                setError("Failed to load transactions");
-                console.error(err);
-            } finally {
-                setLoading(false);
-            }
-        };
+        if (activeTab === "list") {
+            const loadTransactions = async () => {
+                setLoading(true);
+                setError(null);
+                try {
+                    const response = await fetchAPI<TransactionsResponse>(
+                        `/transactions?page=${page}&limit=${limit}`
+                    );
+                    setData(response.data);
+                    setMeta(response.meta);
+                } catch (err) {
+                    setError("Failed to load transactions");
+                    console.error(err);
+                } finally {
+                    setLoading(false);
+                }
+            };
 
-        loadTransactions();
-    }, [page, limit]);
+            loadTransactions();
+        }
+    }, [page, limit, activeTab]);
 
     const handlePageChange = (newPage: number) => {
         setSearchParams({ page: newPage.toString(), limit: limit.toString() });
@@ -101,15 +105,6 @@ export default function TransactionsPage() {
         });
     }, [data, sortConfig]);
 
-    if (loading && !data.length) {
-        return <div className="p-8 text-center">Loading transactions...</div>;
-    }
-
-    if (error) {
-        return <div className="p-8 text-center text-red-500">{error}</div>;
-    }
-
-
     const formatTime = (dateString: string) => {
         const date = new Date(dateString);
         return date.toLocaleTimeString("en-US", {
@@ -132,150 +127,184 @@ export default function TransactionsPage() {
         <div className="h-full flex flex-col overflow-hidden p-4 md:p-8 space-y-4">
             <div className="flex items-center justify-between">
                 <h1 className="text-3xl font-bold tracking-tight">Transactions</h1>
-            </div>
-
-            <div className="flex-1 rounded-md border overflow-auto relative">
-                <Table>
-                    <TableHeader className="sticky top-0 bg-background z-10">
-                        <TableRow>
-                            <TableHead
-                                className="w-[120px] cursor-pointer hover:bg-muted/50"
-                                onClick={() => handleSort("date")}
-                            >
-                                <div className="flex items-center gap-1">
-                                    Date
-                                    <ArrowUpDown className="h-3 w-3" />
-                                </div>
-                            </TableHead>
-                            <TableHead className="w-[80px]">Time</TableHead>
-                            <TableHead
-                                className="w-[100px] cursor-pointer hover:bg-muted/50"
-                                onClick={() => handleSort("symbol")}
-                            >
-                                <div className="flex items-center gap-1">
-                                    Symbol
-                                    <ArrowUpDown className="h-3 w-3" />
-                                </div>
-                            </TableHead>
-                            <TableHead
-                                className="w-[150px] cursor-pointer hover:bg-muted/50"
-                                onClick={() => handleSort("type")}
-                            >
-                                <div className="flex items-center gap-1">
-                                    Type
-                                    <ArrowUpDown className="h-3 w-3" />
-                                </div>
-                            </TableHead>
-                            <TableHead
-                                className="w-[80px] cursor-pointer hover:bg-muted/50"
-                                onClick={() => handleSort("side")}
-                            >
-                                <div className="flex items-center gap-1">
-                                    Side
-                                    <ArrowUpDown className="h-3 w-3" />
-                                </div>
-                            </TableHead>
-                            <TableHead
-                                className="w-[100px] text-right cursor-pointer hover:bg-muted/50"
-                                onClick={() => handleSort("quantity")}
-                            >
-                                <div className="flex items-center justify-end gap-1">
-                                    Quantity
-                                    <ArrowUpDown className="h-3 w-3" />
-                                </div>
-                            </TableHead>
-                            <TableHead
-                                className="w-[120px] text-right cursor-pointer hover:bg-muted/50"
-                                onClick={() => handleSort("price")}
-                            >
-                                <div className="flex items-center justify-end gap-1">
-                                    Price
-                                    <ArrowUpDown className="h-3 w-3" />
-                                </div>
-                            </TableHead>
-                            <TableHead
-                                className="w-[120px] text-right cursor-pointer hover:bg-muted/50"
-                                onClick={() => handleSort("value")}
-                            >
-                                <div className="flex items-center justify-end gap-1">
-                                    Value
-                                    <ArrowUpDown className="h-3 w-3" />
-                                </div>
-                            </TableHead>
-                            <TableHead
-                                className="w-[100px] text-right cursor-pointer hover:bg-muted/50"
-                                onClick={() => handleSort("fees")}
-                            >
-                                <div className="flex items-center justify-end gap-1">
-                                    Fees
-                                    <ArrowUpDown className="h-3 w-3" />
-                                </div>
-                            </TableHead>
-                            <TableHead></TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {sortedData.map((tx) => (
-                            <TableRow key={tx.id}>
-                                <TableCell className="font-mono">{formatDate(tx.date)}</TableCell>
-                                <TableCell className="text-muted-foreground">
-                                    {formatTime(tx.date)}
-                                </TableCell>
-                                <TableCell className="font-medium">{tx.symbol}</TableCell>
-                                <TableCell>{tx.type}</TableCell>
-                                <TableCell>
-                                    <span
-                                        className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ring-1 ring-inset ${tx.side === "Buy"
-                                            ? "bg-green-50 text-green-700 ring-green-600/20"
-                                            : "bg-red-50 text-red-700 ring-red-600/20"
-                                            }`}
-                                    >
-                                        {tx.side}
-                                    </span>
-                                </TableCell>
-                                <TableCell className="text-right">{tx.quantity}</TableCell>
-                                <TableCell className="text-right">
-                                    {formatCurrency(tx.price, tx.currency)}
-                                </TableCell>
-                                <TableCell className="text-right font-medium">
-                                    {formatCurrency(tx.value, tx.currency)}
-                                </TableCell>
-                                <TableCell className="text-right text-muted-foreground">
-                                    {formatCurrency(tx.fees + tx.commission, tx.currency)}
-                                </TableCell>
-                                <TableCell></TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </div>
-
-            {meta && (
-                <div className="flex-none flex items-center justify-between pt-2">
-                    <div className="text-sm text-muted-foreground">
-                        Page {meta.page} of {meta.totalPages}
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handlePageChange(page - 1)}
-                            disabled={page <= 1}
-                        >
-                            <ChevronLeft className="h-4 w-4" />
-                            Previous
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handlePageChange(page + 1)}
-                            disabled={page >= meta.totalPages}
-                        >
-                            Next
-                            <ChevronRight className="h-4 w-4" />
-                        </Button>
-                    </div>
+                <div className="flex space-x-2 bg-muted p-1 rounded-lg">
+                    <button
+                        onClick={() => setActiveTab("list")}
+                        className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${activeTab === "list"
+                            ? "bg-background text-foreground shadow-sm"
+                            : "text-muted-foreground hover:text-foreground"
+                            }`}
+                    >
+                        All Transactions
+                    </button>
+                    <button
+                        onClick={() => setActiveTab("pending")}
+                        className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${activeTab === "pending"
+                            ? "bg-background text-foreground shadow-sm"
+                            : "text-muted-foreground hover:text-foreground"
+                            }`}
+                    >
+                        Pending Conversions
+                    </button>
                 </div>
+            </div>
+
+            {activeTab === "list" ? (
+                <>
+                    {loading && !data.length ? (
+                        <div className="p-8 text-center">Loading transactions...</div>
+                    ) : error ? (
+                        <div className="p-8 text-center text-red-500">{error}</div>
+                    ) : (
+                        <>
+                            <div className="flex-1 rounded-md border overflow-auto relative">
+                                <Table>
+                                    <TableHeader className="sticky top-0 bg-background z-10">
+                                        <TableRow>
+                                            <TableHead
+                                                className="w-[120px] cursor-pointer hover:bg-muted/50"
+                                                onClick={() => handleSort("date")}
+                                            >
+                                                <div className="flex items-center gap-1">
+                                                    Date
+                                                    <ArrowUpDown className="h-3 w-3" />
+                                                </div>
+                                            </TableHead>
+                                            <TableHead className="w-[80px]">Time</TableHead>
+                                            <TableHead
+                                                className="w-[100px] cursor-pointer hover:bg-muted/50"
+                                                onClick={() => handleSort("symbol")}
+                                            >
+                                                <div className="flex items-center gap-1">
+                                                    Symbol
+                                                    <ArrowUpDown className="h-3 w-3" />
+                                                </div>
+                                            </TableHead>
+                                            <TableHead
+                                                className="w-[150px] cursor-pointer hover:bg-muted/50"
+                                                onClick={() => handleSort("type")}
+                                            >
+                                                <div className="flex items-center gap-1">
+                                                    Type
+                                                    <ArrowUpDown className="h-3 w-3" />
+                                                </div>
+                                            </TableHead>
+                                            <TableHead
+                                                className="w-[80px] cursor-pointer hover:bg-muted/50"
+                                                onClick={() => handleSort("side")}
+                                            >
+                                                <div className="flex items-center gap-1">
+                                                    Side
+                                                    <ArrowUpDown className="h-3 w-3" />
+                                                </div>
+                                            </TableHead>
+                                            <TableHead
+                                                className="w-[100px] text-right cursor-pointer hover:bg-muted/50"
+                                                onClick={() => handleSort("quantity")}
+                                            >
+                                                <div className="flex items-center justify-end gap-1">
+                                                    Quantity
+                                                    <ArrowUpDown className="h-3 w-3" />
+                                                </div>
+                                            </TableHead>
+                                            <TableHead
+                                                className="w-[120px] text-right cursor-pointer hover:bg-muted/50"
+                                                onClick={() => handleSort("price")}
+                                            >
+                                                <div className="flex items-center justify-end gap-1">
+                                                    Price
+                                                    <ArrowUpDown className="h-3 w-3" />
+                                                </div>
+                                            </TableHead>
+                                            <TableHead
+                                                className="w-[120px] text-right cursor-pointer hover:bg-muted/50"
+                                                onClick={() => handleSort("value")}
+                                            >
+                                                <div className="flex items-center justify-end gap-1">
+                                                    Value
+                                                    <ArrowUpDown className="h-3 w-3" />
+                                                </div>
+                                            </TableHead>
+                                            <TableHead
+                                                className="w-[100px] text-right cursor-pointer hover:bg-muted/50"
+                                                onClick={() => handleSort("fees")}
+                                            >
+                                                <div className="flex items-center justify-end gap-1">
+                                                    Fees
+                                                    <ArrowUpDown className="h-3 w-3" />
+                                                </div>
+                                            </TableHead>
+                                            <TableHead></TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {sortedData.map((tx) => (
+                                            <TableRow key={tx.id}>
+                                                <TableCell className="font-mono">{formatDate(tx.date)}</TableCell>
+                                                <TableCell className="text-muted-foreground">
+                                                    {formatTime(tx.date)}
+                                                </TableCell>
+                                                <TableCell className="font-medium">{tx.symbol}</TableCell>
+                                                <TableCell>{tx.type}</TableCell>
+                                                <TableCell>
+                                                    <span
+                                                        className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ring-1 ring-inset ${tx.side === "Buy"
+                                                            ? "bg-green-50 text-green-700 ring-green-600/20"
+                                                            : "bg-red-50 text-red-700 ring-red-600/20"
+                                                            }`}
+                                                    >
+                                                        {tx.side}
+                                                    </span>
+                                                </TableCell>
+                                                <TableCell className="text-right">{tx.quantity}</TableCell>
+                                                <TableCell className="text-right">
+                                                    {formatCurrency(tx.price, tx.currency)}
+                                                </TableCell>
+                                                <TableCell className="text-right font-medium">
+                                                    {formatCurrency(tx.value, tx.currency)}
+                                                </TableCell>
+                                                <TableCell className="text-right text-muted-foreground">
+                                                    {formatCurrency(tx.fees + tx.commission, tx.currency)}
+                                                </TableCell>
+                                                <TableCell></TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
+
+                            {meta && (
+                                <div className="flex-none flex items-center justify-between pt-2">
+                                    <div className="text-sm text-muted-foreground">
+                                        Page {meta.page} of {meta.totalPages}
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => handlePageChange(page - 1)}
+                                            disabled={page <= 1}
+                                        >
+                                            <ChevronLeft className="h-4 w-4" />
+                                            Previous
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => handlePageChange(page + 1)}
+                                            disabled={page >= meta.totalPages}
+                                        >
+                                            Next
+                                            <ChevronRight className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
+                        </>
+                    )}
+                </>
+            ) : (
+                <PendingConversions />
             )}
         </div>
     );

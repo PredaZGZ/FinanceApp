@@ -15,3 +15,11 @@ export async function fetchAPI<T>(endpoint: string, options?: RequestInit): Prom
 
     return response.json();
 }
+
+export async function postAPI<T>(endpoint: string, body: any, options?: RequestInit): Promise<T> {
+    return fetchAPI<T>(endpoint, {
+        ...options,
+        method: "POST",
+        body: JSON.stringify(body),
+    });
+}

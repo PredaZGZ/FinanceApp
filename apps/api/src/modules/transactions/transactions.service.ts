@@ -92,7 +92,7 @@ export class TransactionsService {
         const query = `
             SELECT id, date, currency, type, value
             FROM cash_transfers
-            WHERE type IN ('Cash top-up', 'Deposit')
+            WHERE type IN ('Cash top-up', 'Cash withdrawal', 'Deposit', 'Withdrawal')
               AND currency != 'EUR'
               AND "conversionRate" IS NULL
               AND ("skippedConversion" IS NULL OR "skippedConversion" = false)
