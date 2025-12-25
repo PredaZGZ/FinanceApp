@@ -6,7 +6,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import type { Holding } from "@/lib/services/portfolio";
+import type { Holding } from "@/components/portfolio/portfolio.types";
 import { Link } from "react-router-dom";
 
 interface PortfolioTableProps {

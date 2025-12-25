@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { PortfolioSummary } from "@/lib/services/portfolio";
+import type { PortfolioSummary } from "@/components/portfolio/portfolio.types";
 import { TrendingUp, Wallet, Layers } from "lucide-react";
 
 interface PortfolioSummaryCardsProps {

@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Clock } from 'lucide-react';
 
 // Import FilePond styles
+import { fetchAPI, postAPI } from '@/lib/api';
 import 'filepond/dist/filepond.min.css';
 
 export default function ImportPage() {
@@ -19,19 +20,12 @@ export default function ImportPage() {
         const fetchStatus = async () => {
             try {
                 // Assuming endpoint exists as per user request
-                const response = await fetch('http://localhost:4000/import/status');
-                if (response.ok) {
-                    const data = await response.json();
-                    // Assuming data format: { myinvestor: string, revolut: string }
-                    // We can format the date here if needed, e.g., using date-fns or Intl.DateTimeFormat
-                    // For now, assuming the backend sends a readable string or ISO date
-                    setLastUpdatedMyInvestor(data.myinvestor ? new Date(data.myinvestor).toLocaleDateString() : "Never");
-                    setLastUpdatedRevolut(data.revolut ? new Date(data.revolut).toLocaleDateString() : "Never");
-                } else {
-                    // Fallback if endpoint doesn't exist yet or fails
-                    setLastUpdatedMyInvestor("Unknown");
-                    setLastUpdatedRevolut("Unknown");
-                }
+                const data = await fetchAPI<{ myinvestor: string, revolut: string }>('/import/status');
+                // Assuming data format: { myinvestor: string, revolut: string }
+                // We can format the date here if needed, e.g., using date-fns or Intl.DateTimeFormat
+                // For now, assuming the backend sends a readable string or ISO date
+                setLastUpdatedMyInvestor(data.myinvestor ? new Date(data.myinvestor).toLocaleDateString() : "Never");
+                setLastUpdatedRevolut(data.revolut ? new Date(data.revolut).toLocaleDateString() : "Never");
             } catch (error) {
                 console.error("Failed to fetch import status:", error);
                 setLastUpdatedMyInvestor("Error");
@@ -56,17 +50,8 @@ export default function ImportPage() {
         }
 
         try {
-            const response = await fetch('http://localhost:4000/import/myinvestor', {
-                method: 'POST',
-                body: formData,
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Upload failed');
-            }
-
-            const result = await response.json();
+            const result = await postAPI<any>('/import/myinvestor', formData);
+            alert(`Success! Imported ${result.data.tradesCount} trades and ${result.data.transfersCount} transfers.`);
             alert(`Success! Imported ${result.data.tradesCount} trades and ${result.data.transfersCount} transfers.`);
             setMyInvestorMovements([]);
             setMyInvestorOrders([]);
@@ -86,15 +71,7 @@ export default function ImportPage() {
         formData.append('file', revolutFiles[0].file);
 
         try {
-            const response = await fetch('http://localhost:4000/import/revolut', {
-                method: 'POST',
-                body: formData,
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Upload failed');
-            }
+            await postAPI<any>('/import/revolut', formData);
 
             alert('Success! Revolut data imported.');
             setRevolutFiles([]);

@@ -4,8 +4,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { config } from "@/lib/config";
-import { Lock, Mail, ArrowRight, TrendingUp } from "lucide-react";
+
+import { Lock, Mail, TrendingUp } from "lucide-react";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -21,9 +21,7 @@ export default function LoginPage() {
     }, 1500);
   };
 
-  const handleBypass = () => {
-    navigate("/");
-  };
+
 
   return (
     <div className="min-h-screen w-full flex bg-background text-foreground">
@@ -110,17 +108,7 @@ export default function LoginPage() {
                 </Link>
               </p>
 
-              {config.ENABLE_AUTH_BYPASS && (
-                <div className="w-full pt-6 mt-2 border-t border-border/50">
-                  <button
-                    onClick={handleBypass}
-                    className="w-full flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-primary transition-colors py-2"
-                  >
-                    <span>Development Mode: Bypass Auth</span>
-                    <ArrowRight className="w-3 h-3" />
-                  </button>
-                </div>
-              )}
+
             </CardFooter>
           </Card>
         </div>

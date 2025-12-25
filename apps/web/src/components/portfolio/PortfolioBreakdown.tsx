@@ -6,7 +6,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import type { BreakdownItem } from "@/lib/services/portfolio";
+import type { BreakdownItem } from "@/components/portfolio/portfolio.types";
 import { formatDate } from "@/lib/utils";
 
 interface PortfolioBreakdownProps {

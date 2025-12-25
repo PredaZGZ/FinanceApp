@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, ArrowUpDown } from "lucide-react";
 import { formatDate } from "@/lib/utils";
-import PendingConversions from "./components/PendingConversions";
+import PendingConversions from "@/components/transactions/PendingConversions";
 
 interface Transaction {
     id: string;

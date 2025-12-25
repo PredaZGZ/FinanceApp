@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { type PortfolioSummary, portfolioService } from "@/lib/services/portfolio";
+import { portfolioApi } from "@/lib/api";
+import type { PortfolioSummary } from "@/components/portfolio/portfolio.types";
 import { PortfolioSummaryCards } from "@/components/portfolio/PortfolioSummaryCards";
 import { PortfolioTable } from "@/components/portfolio/PortfolioTable";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,7 +22,7 @@ export default function PortfolioPage() {
         const fetchSummary = async () => {
             setLoading(true);
             try {
-                const data = await portfolioService.getSummary(method);
+                const data = await portfolioApi.getSummary(method);
                 setSummary(data);
                 setError(null);
             } catch (err) {
