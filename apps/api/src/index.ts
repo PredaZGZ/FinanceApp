@@ -7,10 +7,13 @@ loadEnv();
 const app = express();
 
 // Middleware
+import { errorHandler } from "./common/middleware/errorHandler";
+import { requestLogger } from "./common/middleware/requestLogger";
+
+// Middleware
 app.use(cors());
 app.use(express.json());
-
-import { errorHandler } from "./common/middleware/errorHandler";
+app.use(requestLogger);
 
 // Routes
 app.get("/health", (_req, res) => res.json({ ok: true }));
