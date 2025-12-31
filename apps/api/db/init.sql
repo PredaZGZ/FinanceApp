@@ -44,3 +44,31 @@ CREATE TABLE IF NOT EXISTS "cash_transfers" (
 -- Add unique indexes to prevent duplicates
 CREATE UNIQUE INDEX IF NOT EXISTS stock_trades_unique_idx ON stock_trades (date, currency, symbol, side, quantity, price);
 CREATE UNIQUE INDEX IF NOT EXISTS cash_transfers_unique_idx ON cash_transfers (date, currency, type, value);
+-- NetWorth Tables
+CREATE TABLE IF NOT EXISTS networth_assets (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,
+    description TEXT,
+    category TEXT,
+    "isSold" BOOLEAN DEFAULT FALSE,
+    "soldAt" TIMESTAMP WITH TIME ZONE,
+    "originalCost" DECIMAL NOT NULL,
+    "originalCurrency" TEXT,
+    notes TEXT,
+    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+CREATE TABLE IF NOT EXISTS networth_asset_valuations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "assetId" UUID NOT NULL REFERENCES networth_assets(id) ON DELETE CASCADE,
+    "valuedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    value DECIMAL NOT NULL,
+    currency TEXT,
+    source TEXT,
+    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_networth_assets_category ON networth_assets(category);
+CREATE INDEX IF NOT EXISTS idx_networth_assets_is_sold ON networth_assets("isSold");
+CREATE INDEX IF NOT EXISTS idx_networth_asset_valuations_asset_id ON networth_asset_valuations("assetId");
+CREATE INDEX IF NOT EXISTS idx_networth_asset_valuations_valued_at ON networth_asset_valuations("valuedAt");
