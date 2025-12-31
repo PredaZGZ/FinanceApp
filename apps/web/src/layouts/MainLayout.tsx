@@ -7,7 +7,7 @@ import {
   Menu,
   X,
   PieChart,
-  Wallet,
+  Landmark,
   ArrowRightLeft,
   TrendingUp,
   LineChart,
@@ -23,7 +23,7 @@ export default function MainLayout() {
   const navItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/" },
     { icon: LineChart, label: "Portfolio", path: "/portfolio" },
-    { icon: Wallet, label: "Accounts", path: "/accounts" },
+    { icon: Landmark, label: "Net Worth", path: "/networth" },
     { icon: ArrowRightLeft, label: "Transactions", path: "/transactions" },
     { icon: PieChart, label: "Reports", path: "/reports" },
     { icon: Upload, label: "Import Data", path: "/import" },
