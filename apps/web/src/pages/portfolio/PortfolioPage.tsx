@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { portfolioApi } from "@/lib/api";
+import { fetchAPI } from "@/lib/api";
 import type { PortfolioSummary } from "@/components/portfolio/portfolio.types";
 import { PortfolioSummaryCards } from "@/components/portfolio/PortfolioSummaryCards";
 import { PortfolioTable } from "@/components/portfolio/PortfolioTable";
@@ -22,7 +22,7 @@ export default function PortfolioPage() {
         const fetchSummary = async () => {
             setLoading(true);
             try {
-                const data = await portfolioApi.getSummary(method);
+                const data = await fetchAPI<PortfolioSummary>(`/portfolio/summary?method=${method}`);
                 setSummary(data);
                 setError(null);
             } catch (err) {

@@ -10,7 +10,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Trash2, FileText, Eye, TrendingUp, DollarSign, Calendar } from "lucide-react";
-import { getSalaries, deleteSalary, type SalaryRecord } from "@/lib/salary.api";
+import type { SalaryRecord, SalaryListResponse } from "./salary.types";
+import { fetchAPI } from "@/lib/api";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 
@@ -26,7 +27,7 @@ export default function SalaryList({ refreshTrigger, onView }: SalaryListProps) 
     const fetchSalaries = async () => {
         try {
             setLoading(true);
-            const res = await getSalaries();
+            const res = await fetchAPI<SalaryListResponse>('/salary');
             setSalaries(res.data);
         } catch (error) {
             console.error(error);
@@ -42,7 +43,7 @@ export default function SalaryList({ refreshTrigger, onView }: SalaryListProps) 
     const handleDelete = async (id: string) => {
         if (!confirm("Are you sure you want to delete this salary record?")) return;
         try {
-            await deleteSalary(id);
+            await fetchAPI<void>(`/salary/${id}`, { method: 'DELETE' });
             fetchSalaries();
         } catch (error) {
             console.error(error);

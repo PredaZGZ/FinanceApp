@@ -1,6 +1,5 @@
-// Verified update
 import { useState, useEffect, useCallback } from "react";
-import { netWorthApi } from "@/lib/api";
+import { fetchAPI, postAPI } from "@/lib/api";
 import type { Asset, NetWorthSummary } from "@/components/net-worth/net-worth.types";
 import { NetWorthSummaryCard } from "@/components/net-worth/NetWorthSummary";
 import { AssetsTable } from "@/components/net-worth/AssetsTable";
@@ -23,8 +22,8 @@ export default function NetWorthPage() {
         setIsLoading(true);
         try {
             const [summaryData, assetsData] = await Promise.all([
-                netWorthApi.getSummary(),
-                netWorthApi.getAssets({ limit: 100 }) // Fetch enough for now
+                fetchAPI<NetWorthSummary>('/networth/summary'),
+                fetchAPI<{ data: Asset[] }>('/networth/assets?limit=100')
             ]);
             setSummary(summaryData);
             setAssets(assetsData.data);
@@ -40,19 +39,22 @@ export default function NetWorthPage() {
     }, [fetchData]);
 
     const handleCreateAsset = async (data: any) => {
-        await netWorthApi.createAsset(data);
+        await postAPI('/networth/assets', data);
         await fetchData();
     };
 
     const handleUpdateAsset = async (data: any) => {
         if (!selectedAsset) return;
-        await netWorthApi.updateAsset(selectedAsset.id, data);
+        await fetchAPI(`/networth/assets/${selectedAsset.id}`, {
+            method: 'PUT',
+            body: JSON.stringify(data)
+        });
         await fetchData();
     };
 
     const handleDeleteAsset = async (asset: Asset) => {
         if (confirm(`Are you sure you want to delete ${asset.name}?`)) {
-            await netWorthApi.deleteAsset(asset.id);
+            await fetchAPI(`/networth/assets/${asset.id}`, { method: 'DELETE' });
             await fetchData();
         }
     };
@@ -64,7 +66,7 @@ export default function NetWorthPage() {
             ...data,
             valuedAt: data.valuedAt ? new Date(data.valuedAt).toISOString() : undefined
         };
-        await netWorthApi.revalueAsset(selectedAsset.id, payload);
+        await postAPI(`/networth/assets/${selectedAsset.id}/valuations`, payload);
         await fetchData();
     };
 

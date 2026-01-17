@@ -4,7 +4,6 @@ import { Plus } from "lucide-react";
 import SalaryList from "@/components/salary/SalaryList";
 import SalaryForm from "@/components/salary/SalaryForm";
 import SalaryDetailModal from "@/components/salary/SalaryDetail";
-import { createSalary } from "@/lib/salary.api";
 import {
     Dialog,
     DialogContent,
@@ -50,7 +49,6 @@ export default function SalaryPage() {
                     <SalaryForm
                         onSuccess={handleCreateSuccess}
                         onCancel={() => setIsCreateOpen(false)}
-                        onSubmit={createSalary}
                     />
                 </DialogContent>
             </Dialog>

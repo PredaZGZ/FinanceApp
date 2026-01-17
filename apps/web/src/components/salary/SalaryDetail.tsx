@@ -6,7 +6,8 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { getSalaryById, type SalaryRecord } from "@/lib/salary.api";
+import type { SalaryRecord } from "./salary.types";
+import { fetchAPI } from "@/lib/api";
 import { FileText, Download, Building2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,7 +22,7 @@ export default function SalaryDetailModal({ salaryId, onClose }: SalaryDetailMod
 
     useEffect(() => {
         if (salaryId) {
-            getSalaryById(salaryId).then(setData).catch(console.error);
+            fetchAPI<SalaryRecord>(`/salary/${salaryId}`).then(setData).catch(console.error);
         } else {
             setData(null);
         }

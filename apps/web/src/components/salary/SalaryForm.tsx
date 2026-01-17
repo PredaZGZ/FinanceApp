@@ -4,17 +4,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2, Upload, CalendarIcon, Building, DollarSign, FileText } from "lucide-react";
-import type { CreateSalaryInput } from "@/lib/salary.api";
+import type { CreateSalaryInput, SalaryRecord } from "./salary.types";
+import { postAPI } from "@/lib/api";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 interface SalaryFormProps {
     onSuccess: () => void;
     onCancel: () => void;
-    onSubmit: (data: CreateSalaryInput) => Promise<void>;
 }
 
-export default function SalaryForm({ onSuccess, onCancel, onSubmit }: SalaryFormProps) {
+export default function SalaryForm({ onSuccess, onCancel }: SalaryFormProps) {
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState<CreateSalaryInput>({
         date: new Date().toISOString().split('T')[0],
@@ -50,7 +50,21 @@ export default function SalaryForm({ onSuccess, onCancel, onSubmit }: SalaryForm
         e.preventDefault();
         setLoading(true);
         try {
-            await onSubmit({ ...formData, file: file || undefined });
+            const data = { ...formData, file: file || undefined };
+            const form = new FormData();
+            form.append('date', data.date);
+            if (data.grossSalary) form.append('grossSalary', data.grossSalary.toString());
+            if (data.netSalary) form.append('netSalary', data.netSalary.toString());
+            if (data.company) form.append('company', data.company);
+            if (data.notes) form.append('notes', data.notes);
+
+            form.append('breakdown', JSON.stringify(data.breakdown));
+
+            if (data.file) {
+                form.append('file', data.file);
+            }
+
+            await postAPI<SalaryRecord>('/salary', form);
             onSuccess();
         } catch (error) {
             console.error(error);

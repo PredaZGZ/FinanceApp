@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { portfolioApi } from "@/lib/api";
+import { fetchAPI } from "@/lib/api";
 import type { Holding } from "@/components/portfolio/portfolio.types";
 import { PortfolioBreakdown } from "@/components/portfolio/PortfolioBreakdown";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,7 +28,7 @@ export default function PortfolioAnalysisPage() {
         const fetchAnalysis = async () => {
             setLoading(true);
             try {
-                const data = await portfolioApi.getAnalysis(symbol, method);
+                const data = await fetchAPI<Holding>(`/portfolio/analysis/${symbol}?method=${method}`);
                 setHolding(data);
                 setError(null);
             } catch (err) {
