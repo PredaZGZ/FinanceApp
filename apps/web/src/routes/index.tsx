@@ -8,6 +8,7 @@ import PortfolioAnalysisPage from "@/pages/portfolio/PortfolioAnalysisPage";
 
 import ImportPage from "@/pages/import-data/ImportPage";
 import NetWorthPage from "@/pages/net-worth/NetWorthPage";
+import SalaryPage from "@/pages/salary/SalaryPage";
 import { transactionsRoutes } from "./transactions.routes";
 
 const router = createBrowserRouter([
@@ -37,6 +38,10 @@ const router = createBrowserRouter([
         path: "import",
         element: <ImportPage />,
       },
+      {
+        path: "salary",
+        element: <SalaryPage />,
+      },
       ...transactionsRoutes,
       {
         path: "portfolio",
@@ -58,6 +63,8 @@ const router = createBrowserRouter([
     element: <Navigate to="/" replace />,
   },
 ]);
+// Routes update
+
 
 export default function AppRouter() {
   return <RouterProvider router={router} />;

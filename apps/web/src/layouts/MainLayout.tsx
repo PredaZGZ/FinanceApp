@@ -11,7 +11,8 @@ import {
   ArrowRightLeft,
   TrendingUp,
   LineChart,
-  Upload
+  Upload,
+  Banknote
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -26,6 +27,7 @@ export default function MainLayout() {
     { icon: Landmark, label: "Net Worth", path: "/networth" },
     { icon: ArrowRightLeft, label: "Transactions", path: "/transactions" },
     { icon: PieChart, label: "Reports", path: "/reports" },
+    { icon: Banknote, label: "Salaries", path: "/salary" },
     { icon: Upload, label: "Import Data", path: "/import" },
     { icon: Settings, label: "Settings", path: "/settings" },
   ];
