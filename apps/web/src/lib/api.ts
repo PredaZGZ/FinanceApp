@@ -16,6 +16,7 @@ export async function fetchAPI<T>(endpoint: string, options?: RequestInit): Prom
     return response.json();
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function postAPI<T>(endpoint: string, body: any, options?: RequestInit): Promise<T> {
     const isFormData = body instanceof FormData;
     const headers = { ...options?.headers } as Record<string, string>;

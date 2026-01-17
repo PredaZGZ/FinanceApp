@@ -9,8 +9,11 @@ import { fetchAPI, postAPI } from '@/lib/api';
 import 'filepond/dist/filepond.min.css';
 
 export default function ImportPage() {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [myInvestorMovements, setMyInvestorMovements] = useState<any[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [myInvestorOrders, setMyInvestorOrders] = useState<any[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [revolutFiles, setRevolutFiles] = useState<any[]>([]);
 
     const [lastUpdatedMyInvestor, setLastUpdatedMyInvestor] = useState<string>("Loading...");
@@ -26,7 +29,7 @@ export default function ImportPage() {
                 // For now, assuming the backend sends a readable string or ISO date
                 setLastUpdatedMyInvestor(data.myinvestor ? new Date(data.myinvestor).toLocaleDateString() : "Never");
                 setLastUpdatedRevolut(data.revolut ? new Date(data.revolut).toLocaleDateString() : "Never");
-            } catch (error) {
+            } catch (error: unknown) {
                 console.error("Failed to fetch import status:", error);
                 setLastUpdatedMyInvestor("Error");
                 setLastUpdatedRevolut("Error");
@@ -50,14 +53,14 @@ export default function ImportPage() {
         }
 
         try {
-            const result = await postAPI<any>('/import/myinvestor', formData);
-            alert(`Success! Imported ${result.data.tradesCount} trades and ${result.data.transfersCount} transfers.`);
+            const result = await postAPI<{ data: { tradesCount: number; transfersCount: number } }>('/import/myinvestor', formData);
             alert(`Success! Imported ${result.data.tradesCount} trades and ${result.data.transfersCount} transfers.`);
             setMyInvestorMovements([]);
             setMyInvestorOrders([]);
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error(error);
-            alert(`Error uploading MyInvestor files: ${error.message}`);
+            const msg = error instanceof Error ? error.message : "Unknown error";
+            alert(`Error uploading MyInvestor files: ${msg}`);
         }
     };
 
@@ -71,13 +74,14 @@ export default function ImportPage() {
         formData.append('file', revolutFiles[0].file);
 
         try {
-            await postAPI<any>('/import/revolut', formData);
+            await postAPI<void>('/import/revolut', formData);
 
             alert('Success! Revolut data imported.');
             setRevolutFiles([]);
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error(error);
-            alert(`Error uploading Revolut file: ${error.message}`);
+            const msg = error instanceof Error ? error.message : "Unknown error";
+            alert(`Error uploading Revolut file: ${msg}`);
         }
     };
 

@@ -24,6 +24,7 @@ export default function SalaryDetailModal({ salaryId, onClose }: SalaryDetailMod
         if (salaryId) {
             fetchAPI<SalaryRecord>(`/salary/${salaryId}`).then(setData).catch(console.error);
         } else {
+            // eslint-disable-next-line
             setData(null);
         }
     }, [salaryId]);
@@ -74,7 +75,7 @@ export default function SalaryDetailModal({ salaryId, onClose }: SalaryDetailMod
 
                         {deductions.length > 0 && (
                             <div>
-                                <h4 className="text-xs font-semibold text-muted-foreground uppercase mb-2 text-rose-500">Deductions</h4>
+                                <h4 className="text-xs font-semibold uppercase mb-2 text-rose-500">Deductions</h4>
                                 <div className="space-y-2">
                                     {deductions.map((item, i) => (
                                         <div key={i} className="flex justify-between text-sm text-muted-foreground">

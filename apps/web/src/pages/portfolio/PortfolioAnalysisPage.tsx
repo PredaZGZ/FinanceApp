@@ -19,7 +19,7 @@ export default function PortfolioAnalysisPage() {
     const navigate = useNavigate();
     const [holding, setHolding] = useState<Holding | null>(null);
     const [loading, setLoading] = useState(true);
-    const [_, setError] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
     const [method, setMethod] = useState<string>("FIFO");
 
     useEffect(() => {
@@ -65,6 +65,8 @@ export default function PortfolioAnalysisPage() {
 
             {(loading && !holding) ? (
                 <div className="p-8">Loading analysis...</div>
+            ) : error ? (
+                <div className="p-8 text-red-500">{error}</div>
             ) : (
                 holding && (
                     <div className={loading ? "opacity-50 pointer-events-none transition-opacity" : "transition-opacity"}>

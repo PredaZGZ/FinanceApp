@@ -1,6 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { fetchAPI, postAPI } from "@/lib/api";
-import type { Asset, NetWorthSummary } from "@/components/net-worth/net-worth.types";
+import type {
+    Asset,
+    NetWorthSummary,
+    CreateAssetRequest,
+    UpdateAssetRequest,
+    CreateValuationRequest
+} from "@/components/net-worth/net-worth.types";
 import { NetWorthSummaryCard } from "@/components/net-worth/NetWorthSummary";
 import { AssetsTable } from "@/components/net-worth/AssetsTable";
 import { AssetDialog } from "@/components/net-worth/AssetDialog";
@@ -38,12 +44,12 @@ export default function NetWorthPage() {
         fetchData();
     }, [fetchData]);
 
-    const handleCreateAsset = async (data: any) => {
+    const handleCreateAsset = async (data: CreateAssetRequest) => {
         await postAPI('/networth/assets', data);
         await fetchData();
     };
 
-    const handleUpdateAsset = async (data: any) => {
+    const handleUpdateAsset = async (data: UpdateAssetRequest) => {
         if (!selectedAsset) return;
         await fetchAPI(`/networth/assets/${selectedAsset.id}`, {
             method: 'PUT',
@@ -59,7 +65,8 @@ export default function NetWorthPage() {
         }
     };
 
-    const handleRevalueAsset = async (data: any) => {
+
+    const handleRevalueAsset = async (data: CreateValuationRequest) => {
         if (!selectedAsset) return;
         // Ensure valuedAt is proper ISO string if included
         const payload = {

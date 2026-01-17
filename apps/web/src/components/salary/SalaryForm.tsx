@@ -33,7 +33,7 @@ export default function SalaryForm({ onSuccess, onCancel }: SalaryFormProps) {
         }));
     };
 
-    const handleBreakdownChange = (index: number, field: keyof typeof formData.breakdown[0], value: any) => {
+    const handleBreakdownChange = (index: number, field: keyof typeof formData.breakdown[0], value: string | number) => {
         const newBreakdown = [...formData.breakdown];
         newBreakdown[index] = { ...newBreakdown[index], [field]: value };
         setFormData(prev => ({ ...prev, breakdown: newBreakdown }));
@@ -192,7 +192,7 @@ export default function SalaryForm({ onSuccess, onCancel }: SalaryFormProps) {
                     {formData.breakdown.map((item, index) => (
                         <Card key={index} className="bg-muted/30 border-none shadow-sm">
                             <CardContent className="p-3 flex gap-3 items-center">
-                                <div className="flex-[2]">
+                                <div style={{ flex: 2 }}>
                                     <Input
                                         className="bg-background"
                                         placeholder="Concept (e.g. Base Salary)"

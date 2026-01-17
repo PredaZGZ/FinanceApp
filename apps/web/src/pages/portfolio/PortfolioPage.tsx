@@ -15,7 +15,7 @@ import {
 export default function PortfolioPage() {
     const [summary, setSummary] = useState<PortfolioSummary | null>(null);
     const [loading, setLoading] = useState(true);
-    const [_, setError] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
     const [method, setMethod] = useState<string>("FIFO");
 
     useEffect(() => {
@@ -55,6 +55,8 @@ export default function PortfolioPage() {
 
             {(loading && !summary) ? (
                 <div className="p-8">Loading portfolio...</div>
+            ) : error ? (
+                <div className="p-8 text-red-500">{error}</div>
             ) : (
                 summary && (
                     <>

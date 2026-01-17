@@ -27,7 +27,14 @@ export interface CreateSalaryInput {
     file?: File;
 }
 
+export interface Meta {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+}
+
 export interface SalaryListResponse {
     data: SalaryRecord[];
-    meta: any;
+    meta: Meta;
 }
