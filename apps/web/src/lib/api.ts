@@ -44,3 +44,45 @@ export const portfolioApi = {
         return fetchAPI<Holding>(`/portfolio/analysis/${symbol}?method=${method}`);
     }
 };
+
+import type { Asset, CreateAssetRequest, UpdateAssetRequest, Valuation, CreateValuationRequest, NetWorthSummary } from "@/components/net-worth/net-worth.types";
+
+export const netWorthApi = {
+    getAssets: async (query?: any): Promise<{ data: Asset[], meta: any }> => {
+        const queryString = query ? '?' + new URLSearchParams(query).toString() : '';
+        return fetchAPI<{ data: Asset[], meta: any }>(`/networth/assets${queryString}`);
+    },
+
+    createAsset: async (data: CreateAssetRequest): Promise<Asset> => {
+        return postAPI<Asset>('/networth/assets', data);
+    },
+
+    getAssetById: async (id: string): Promise<Asset> => {
+        return fetchAPI<Asset>(`/networth/assets/${id}`);
+    },
+
+    updateAsset: async (id: string, data: UpdateAssetRequest): Promise<Asset> => {
+        return fetchAPI<Asset>(`/networth/assets/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(data)
+        });
+    },
+
+    deleteAsset: async (id: string): Promise<void> => {
+        return fetchAPI<void>(`/networth/assets/${id}`, {
+            method: 'DELETE'
+        });
+    },
+
+    revalueAsset: async (id: string, data: CreateValuationRequest): Promise<Valuation> => {
+        return postAPI<Valuation>(`/networth/assets/${id}/valuations`, data);
+    },
+
+    getAssetValuations: async (id: string): Promise<Valuation[]> => {
+        return fetchAPI<Valuation[]>(`/networth/assets/${id}/valuations`);
+    },
+
+    getSummary: async (): Promise<NetWorthSummary> => {
+        return fetchAPI<NetWorthSummary>('/networth/summary');
+    }
+};
