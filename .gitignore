@@ -53,3 +53,6 @@ Thumbs.db
 tmp
 # local outputs
 OUTPUT.md
+
+# uploads
+uploads/

@@ -72,3 +72,31 @@ CREATE INDEX IF NOT EXISTS idx_networth_assets_category ON networth_assets(categ
 CREATE INDEX IF NOT EXISTS idx_networth_assets_is_sold ON networth_assets("isSold");
 CREATE INDEX IF NOT EXISTS idx_networth_asset_valuations_asset_id ON networth_asset_valuations("assetId");
 CREATE INDEX IF NOT EXISTS idx_networth_asset_valuations_valued_at ON networth_asset_valuations("valuedAt");
+
+-- Salary Wrapper Table
+CREATE TABLE IF NOT EXISTS salary_records (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    date TIMESTAMP WITH TIME ZONE,
+    "grossSalary" DECIMAL,
+    "netSalary" DECIMAL,
+    company TEXT,
+    "fileName" TEXT,
+    "fileStorageKey" TEXT,
+    notes TEXT,
+    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Flexible Breakdown Items
+CREATE TABLE IF NOT EXISTS salary_breakdown_items (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "salaryId" UUID NOT NULL REFERENCES salary_records(id) ON DELETE CASCADE,
+    concept TEXT NOT NULL,
+    amount DECIMAL NOT NULL,
+    type TEXT NOT NULL, -- 'payment' (devengos) or 'deduction' (deducciones)
+    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_salary_records_date ON salary_records(date);
+CREATE INDEX IF NOT EXISTS idx_salary_breakdown_items_salary_id ON salary_breakdown_items("salaryId");
