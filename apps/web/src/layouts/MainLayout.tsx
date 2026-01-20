@@ -1,4 +1,5 @@
-import { Outlet, Link, useLocation } from "react-router-dom";
+import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "@/components/common/AuthContext";
 import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard,
@@ -18,6 +19,8 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 export default function MainLayout() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
 
@@ -89,12 +92,17 @@ export default function MainLayout() {
         </nav>
 
         <div className="p-4 border-t border-sidebar-border">
-          <Link to="/login">
-            <Button variant="ghost" className="w-full gap-2 text-sidebar-foreground/70 hover:text-destructive hover:bg-destructive/10 justify-start">
-              <LogOut className="h-4 w-4" />
-              Logout
-            </Button>
-          </Link>
+          <Button
+            variant="ghost"
+            className="w-full gap-2 text-sidebar-foreground/70 hover:text-destructive hover:bg-destructive/10 justify-start"
+            onClick={async () => {
+              await logout();
+              navigate("/login");
+            }}
+          >
+            <LogOut className="h-4 w-4" />
+            Logout
+          </Button>
         </div>
       </aside>
 
@@ -115,9 +123,13 @@ export default function MainLayout() {
             </h1>
           </div>
           <div className="flex items-center gap-4">
-            <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center text-xs font-medium border border-border">
-              JD
-            </div>
+            {user?.profileImage ? (
+              <img src={user.profileImage} alt="Profile" className="h-8 w-8 rounded-full border border-border object-cover" />
+            ) : (
+              <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center text-xs font-medium border border-border">
+                {user?.name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || "U"}
+              </div>
+            )}
           </div>
         </header>
 

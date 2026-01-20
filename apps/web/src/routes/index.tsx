@@ -1,4 +1,4 @@
-import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom";
+import { createBrowserRouter, RouterProvider, Navigate, Outlet } from "react-router-dom";
 import AuthLayout from "@/layouts/AuthLayout";
 import MainLayout from "@/layouts/MainLayout";
 import LoginPage from "@/pages/auth/LoginPage";
@@ -11,64 +11,78 @@ import ImportPage from "@/pages/import-data/ImportPage";
 import NetWorthPage from "@/pages/net-worth/NetWorthPage";
 import SalaryPage from "@/pages/salary/SalaryPage";
 import { transactionsRoutes } from "./transactions.routes";
+import { AuthProvider } from "@/components/common/AuthContext";
+import ProtectedRoute from "@/components/common/ProtectedRoute";
 
 const router = createBrowserRouter([
   {
-    element: <AuthLayout />,
+    element: (
+      <AuthProvider>
+        <Outlet />
+      </AuthProvider>
+    ),
     children: [
       {
-        path: "/login",
-        element: <LoginPage />,
-      },
-      {
-        path: "/register",
-        element: <SignUpPage />,
-      },
-    ],
-  },
-  {
-    path: "/",
-    element: <MainLayout />,
-    children: [
-      {
-        path: "",
-        element: <DashboardPage />,
-      },
-      {
-        path: "networth",
-        element: <NetWorthPage />,
-      },
-      {
-        path: "import",
-        element: <ImportPage />,
-      },
-      {
-        path: "salary",
-        element: <SalaryPage />,
-      },
-      ...transactionsRoutes,
-      {
-        path: "portfolio",
+        element: <AuthLayout />,
         children: [
           {
-            path: "",
-            element: <PortfolioPage />,
+            path: "/login",
+            element: <LoginPage />,
           },
           {
-            path: ":symbol",
-            element: <PortfolioAnalysisPage />,
-          }
-        ]
+            path: "/register",
+            element: <SignUpPage />,
+          },
+        ],
       },
-    ],
-  },
-  {
-    path: "*",
-    element: <Navigate to="/" replace />,
-  },
+      {
+        path: "/",
+        element: <ProtectedRoute />,
+        children: [
+          {
+            element: <MainLayout />,
+            children: [
+              {
+                path: "",
+                element: <DashboardPage />,
+              },
+              {
+                path: "networth",
+                element: <NetWorthPage />,
+              },
+              {
+                path: "import",
+                element: <ImportPage />,
+              },
+              {
+                path: "salary",
+                element: <SalaryPage />,
+              },
+              ...transactionsRoutes,
+              {
+                path: "portfolio",
+                children: [
+                  {
+                    path: "",
+                    element: <PortfolioPage />,
+                  },
+                  {
+                    path: ":symbol",
+                    element: <PortfolioAnalysisPage />,
+                  }
+                ]
+              },
+            ]
+          }
+        ],
+      },
+      {
+        path: "*",
+        element: <Navigate to="/" replace />,
+      },
+    ]
+  }
 ]);
-// Routes update
-
 
 export default function AppRouter() {
   return <RouterProvider router={router} />;

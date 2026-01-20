@@ -5,10 +5,12 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { postAPI } from "@/lib/api";
+import { useAuth } from "@/components/common/AuthContext";
 import { Lock, Mail, TrendingUp, ArrowRight } from "lucide-react";
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const { refetchUser } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,6 +33,7 @@ export default function LoginPage() {
         email: formData.email,
         password: formData.password
       });
+      await refetchUser();
       navigate("/");
     } catch (err) {
       if (err instanceof Error) {
