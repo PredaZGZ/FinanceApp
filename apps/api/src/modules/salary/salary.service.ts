@@ -2,20 +2,20 @@ import pool from '../../common/db/client';
 import type { CreateSalaryRecordInput, GetSalaryRecordsQuery } from './salary.schema';
 
 export class SalaryService {
-    async create(data: CreateSalaryRecordInput, file?: Express.Multer.File) {
+    async create(userId: string, data: CreateSalaryRecordInput, file?: Express.Multer.File) {
         const client = await pool.connect();
         try {
             await client.query('BEGIN');
 
             const { date, grossSalary, netSalary, company, notes, breakdown } = data;
-            const fileStorageKey = file ? file.path : null; // In a real app we'd upload to S3/equivalent. Here we store local path.
+            const fileStorageKey = file ? file.path : null;
             const fileName = file ? file.originalname : null;
 
             const salaryRes = await client.query(
-                `INSERT INTO salary_records (date, "grossSalary", "netSalary", company, notes, "fileName", "fileStorageKey")
-         VALUES ($1, $2, $3, $4, $5, $6, $7)
+                `INSERT INTO salary_records (date, "grossSalary", "netSalary", company, notes, "fileName", "fileStorageKey", "userId")
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
          RETURNING id`,
-                [date, grossSalary, netSalary, company, notes, fileName, fileStorageKey]
+                [date, grossSalary, netSalary, company, notes, fileName, fileStorageKey, userId]
             );
             const salaryId = salaryRes.rows[0].id;
 
@@ -39,12 +39,12 @@ export class SalaryService {
         }
     }
 
-    async findAll(query: GetSalaryRecordsQuery) {
+    async findAll(userId: string, query: GetSalaryRecordsQuery) {
         const { page, limit, company, from, to } = query;
         const offset = (page - 1) * limit;
-        const params: any[] = [limit, offset];
-        let whereClause = 'WHERE 1=1';
-        let paramIndex = 3;
+        const params: any[] = [limit, offset, userId]; // $1=limit, $2=offset, $3=userId
+        let whereClause = 'WHERE "userId" = $3';
+        let paramIndex = 4;
 
         if (company) {
             whereClause += ` AND company ILIKE $${paramIndex++}`;
@@ -78,8 +78,8 @@ export class SalaryService {
         };
     }
 
-    async findById(id: string) {
-        const salaryRes = await pool.query('SELECT * FROM salary_records WHERE id = $1', [id]);
+    async findById(userId: string, id: string) {
+        const salaryRes = await pool.query('SELECT * FROM salary_records WHERE id = $1 AND "userId" = $2', [id, userId]);
         if (salaryRes.rows.length === 0) return null;
 
         const breakdownRes = await pool.query(
@@ -93,9 +93,10 @@ export class SalaryService {
         };
     }
 
-    async delete(id: string) {
+    async delete(userId: string, id: string) {
         // Cascade delete handles breakdown items
-        await pool.query('DELETE FROM salary_records WHERE id = $1', [id]);
+        // Ensure user owns the record
+        await pool.query('DELETE FROM salary_records WHERE id = $1 AND "userId" = $2', [id, userId]);
     }
 }
 

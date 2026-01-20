@@ -2,12 +2,12 @@ import pool from '../../common/db/client';
 import type { GetTransactionsQuery } from './transactions.schema';
 
 export class TransactionsService {
-    async getTransactions(filters: GetTransactionsQuery) {
+    async getTransactions(userId: string, filters: GetTransactionsQuery) {
         const { page, limit, from, to, currency, symbol, type } = filters;
         const offset = (page - 1) * limit;
 
-        const queryParams: any[] = [];
-        let paramIndex = 1;
+        const queryParams: any[] = [userId];
+        let paramIndex = 2; // Start from 2 because $1 is userId
 
         let query = `
       SELECT
@@ -24,7 +24,7 @@ export class TransactionsService {
         commission,
         count(*) OVER() as full_count
       FROM stock_trades
-      WHERE 1=1
+      WHERE "userId" = $1
     `;
         // Where 1=1 to make the query dynamic for each filter, use AND always with no error
         if (from) {
@@ -73,42 +73,46 @@ export class TransactionsService {
         };
     }
 
-    async getExchangeRates() {
+    async getExchangeRates(userId: string) {
+        // Exchange rates might be shared or user specific? 
+        // Assuming we look at user's own transfer history for inferred rates
         const query = `
             SELECT date, "conversionRate", currency
             FROM cash_transfers
-            WHERE "conversionRate" IS NOT NULL
+            WHERE "userId" = $1
+              AND "conversionRate" IS NOT NULL
             ORDER BY date ASC
         `;
-        const result = await pool.query(query);
+        const result = await pool.query(query, [userId]);
         return result.rows.map(row => ({
             date: new Date(row.date),
             rate: parseFloat(row.conversionRate),
-            currency: row.currency // This is usually the source currency (e.g. USD topup converted from EUR)
+            currency: row.currency
         }));
     }
 
-    async findPendingConversions() {
+    async findPendingConversions(userId: string) {
         const query = `
             SELECT id, date, currency, type, value
             FROM cash_transfers
-            WHERE type IN ('Cash top-up', 'Cash withdrawal', 'Deposit', 'Withdrawal')
+            WHERE "userId" = $1
+              AND type IN ('Cash top-up', 'Cash withdrawal', 'Deposit', 'Withdrawal')
               AND currency != 'EUR'
               AND "conversionRate" IS NULL
               AND ("skippedConversion" IS NULL OR "skippedConversion" = false)
             ORDER BY date DESC
         `;
-        const result = await pool.query(query);
+        const result = await pool.query(query, [userId]);
         return result.rows;
     }
 
-    async updateTransactionConversion(id: string, eurCost: number) {
+    async updateTransactionConversion(userId: string, id: string, eurCost: number) {
         const client = await pool.connect();
         try {
             await client.query('BEGIN');
 
             // Get transaction to calculate rate
-            const txRes = await client.query('SELECT value, currency FROM cash_transfers WHERE id = $1', [id]);
+            const txRes = await client.query('SELECT value, currency FROM cash_transfers WHERE id = $1 AND "userId" = $2', [id, userId]);
             if (txRes.rows.length === 0) {
                 throw new Error('Transaction not found');
             }
@@ -121,8 +125,8 @@ export class TransactionsService {
             await client.query(`
                 UPDATE cash_transfers
                 SET "eurCost" = $1, "conversionRate" = $2, "updatedAt" = NOW()
-                WHERE id = $3
-            `, [eurCost, rate, id]);
+                WHERE id = $3 AND "userId" = $4
+            `, [eurCost, rate, id, userId]);
 
             await client.query('COMMIT');
             return { id, eurCost, conversionRate: rate };

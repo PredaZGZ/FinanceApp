@@ -4,17 +4,18 @@ import { transactionsService } from '../transactions/transactions.service';
 import { StockTrade } from './portfolio.types';
 
 export class PortfolioController {
-    async getPortfolioAnalysis(req: Request, reqRes: Response) {
+    async getPortfolioAnalysis(req: any, reqRes: Response) {
         try {
             const { symbol } = req.params;
             const { method = 'FIFO' } = req.query;
+            const userId = req.user!.id;
 
             if (!symbol) {
                 return reqRes.status(400).json({ error: 'Symbol is required' });
             }
 
             // Fetch all trades for this symbol, regardless of currency
-            const tradesResult = await transactionsService.getTransactions({
+            const tradesResult = await transactionsService.getTransactions(userId, {
                 symbol: symbol as string,
                 limit: 10000,
                 page: 1
@@ -47,19 +48,20 @@ export class PortfolioController {
         }
     }
 
-    async getPortfolioSummary(req: Request, reqRes: Response) {
+    async getPortfolioSummary(req: any, reqRes: Response) {
         try {
             const { method = 'FIFO', currency = 'EUR' } = req.query; // Default to EUR for unified view
+            const userId = req.user!.id;
 
             // Fetch all trades (mixed currencies)
-            const tradesResult = await transactionsService.getTransactions({
+            const tradesResult = await transactionsService.getTransactions(userId, {
                 // currency: currency as 'EUR' | 'USD', // Don't filter by currency if we want everything
                 limit: 100000,
                 page: 1
             });
 
             // Fetch exchange rates
-            const exchangeRates = await transactionsService.getExchangeRates();
+            const exchangeRates = await transactionsService.getExchangeRates(userId);
 
             const trades: StockTrade[] = tradesResult.data.map((t: any) => ({
                 date: new Date(t.date),

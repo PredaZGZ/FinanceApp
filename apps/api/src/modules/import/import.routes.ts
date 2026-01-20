@@ -1,9 +1,18 @@
 import { Router } from 'express';
 import multer from 'multer';
 import { importController } from './import.controller';
+import { authenticateToken } from '../auth/auth.middleware';
 
 const router = Router();
-const upload = multer({ storage: multer.memoryStorage() });
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+        fileSize: 5 * 1024 * 1024 // 5MB limit
+    }
+});
+
+// Protect all import routes
+router.use(authenticateToken);
 
 router.post('/revolut', upload.single('file'), importController.importRevolut.bind(importController));
 

@@ -2,13 +2,14 @@ import { Request, Response } from 'express';
 import { importService } from './import.service';
 
 export class ImportController {
-    async importRevolut(req: Request, res: Response) {
+    async importRevolut(req: any, res: Response) {
         try {
             if (!req.file) {
                 return res.status(400).json({ error: 'No file uploaded. Ensure the form-data field name is "file".' });
             }
 
-            const data = await importService.importRevolut(req.file.buffer, req.file.originalname);
+            const userId = req.user!.id; // Ensure auth middleware runs before
+            const data = await importService.importRevolut(userId, req.file.buffer, req.file.originalname);
             res.json({ message: 'Revolut data imported successfully', data });
         } catch (error: any) {
             console.error('Error importing Revolut data:', error);
@@ -16,7 +17,7 @@ export class ImportController {
         }
     }
 
-    async importMyInvestor(req: Request, res: Response) {
+    async importMyInvestor(req: any, res: Response) {
         try {
             const files = req.files as { [fieldname: string]: Express.Multer.File[] };
             const movementsFile = files['movements']?.[0];
@@ -26,7 +27,9 @@ export class ImportController {
                 return res.status(400).json({ error: 'Movements file is required (field name: "movements")' });
             }
 
+            const userId = req.user!.id;
             const data = await importService.importMyInvestor(
+                userId,
                 movementsFile.buffer,
                 ordersFile?.buffer,
                 movementsFile.originalname
@@ -39,9 +42,10 @@ export class ImportController {
         }
     }
 
-    async getImportStatus(req: Request, res: Response) {
+    async getImportStatus(req: any, res: Response) {
         try {
-            const status = await importService.getImportStatus();
+            const userId = req.user!.id;
+            const status = await importService.getImportStatus(userId);
             res.json(status);
         } catch (error) {
             console.error('Error fetching import status:', error);

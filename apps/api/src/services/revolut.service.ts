@@ -55,7 +55,7 @@ export class RevolutService {
         };
     }
 
-    async saveToDb(data: RevolutStatement): Promise<void> {
+    async saveToDb(userId: string, data: RevolutStatement): Promise<void> {
         const client = await pool.connect();
         try {
             await client.query('BEGIN');
@@ -65,8 +65,8 @@ export class RevolutService {
                 if (currencyData.stockTrades) {
                     for (const trade of currencyData.stockTrades) {
                         await client.query(
-                            `INSERT INTO stock_trades (id, date, currency, symbol, type, quantity, price, side, value, fees, commission, source, "updatedAt")
-                             VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'revolut_statement', NOW())
+                            `INSERT INTO stock_trades (id, date, currency, symbol, type, quantity, price, side, value, fees, commission, source, "updatedAt", "userId")
+                             VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'revolut_statement', NOW(), $11)
                              ON CONFLICT (date, currency, symbol, side, quantity, price) DO NOTHING`,
                             [
                                 new Date(trade.date),
@@ -78,7 +78,8 @@ export class RevolutService {
                                 trade.side,
                                 trade.value,
                                 trade.fees,
-                                trade.commission
+                                trade.commission,
+                                userId
                             ]
                         );
                     }
@@ -88,8 +89,8 @@ export class RevolutService {
                 if (currencyData.cashTransfers) {
                     for (const transfer of currencyData.cashTransfers) {
                         await client.query(
-                            `INSERT INTO cash_transfers (id, date, currency, type, value, fees, commission, "eurCost", "conversionRate", "skippedConversion", source, "updatedAt")
-                             VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, 'revolut_statement', NOW())
+                            `INSERT INTO cash_transfers (id, date, currency, type, value, fees, commission, "eurCost", "conversionRate", "skippedConversion", source, "updatedAt", "userId")
+                             VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, 'revolut_statement', NOW(), $10)
                              ON CONFLICT (date, currency, type, value) DO NOTHING`,
                             [
                                 new Date(transfer.date),
@@ -100,7 +101,8 @@ export class RevolutService {
                                 transfer.commission,
                                 transfer.eurCost || null,
                                 transfer.conversionRate || null,
-                                transfer.skippedConversion || false
+                                transfer.skippedConversion || false,
+                                userId
                             ]
                         );
                     }

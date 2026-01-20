@@ -5,8 +5,11 @@ import importRouter from './import/import.routes';
 import netWorthRouter from './networth/networth.routes';
 import salaryRouter from './salary/salary.routes';
 
+import authRouter from './auth/auth.routes';
+
 const router = Router();
 
+router.use("/auth", authRouter);
 router.use("/transactions", transactionsRouter);
 router.use("/portfolio", portfolioRouter);
 router.use("/import", importRouter);

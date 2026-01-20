@@ -3,7 +3,7 @@ import { salaryService } from './salary.service';
 import { createSalaryRecordSchema, getSalaryRecordsQuerySchema, breakdownItemSchema } from './salary.schema';
 
 export class SalaryController {
-    async create(req: Request, res: Response) {
+    async create(req: any, res: Response) {
         try {
             // breakdown comes as a JSON string in multipart form-data
             let breakdown = [];
@@ -28,7 +28,8 @@ export class SalaryController {
                 return res.status(400).json({ error: parseResult.error });
             }
 
-            const result = await salaryService.create(parseResult.data, req.file);
+            const userId = req.user!.id;
+            const result = await salaryService.create(userId, parseResult.data, req.file);
             res.status(201).json(result);
         } catch (error) {
             console.error(error);
@@ -36,13 +37,14 @@ export class SalaryController {
         }
     }
 
-    async findAll(req: Request, res: Response) {
+    async findAll(req: any, res: Response) {
         try {
             const parseResult = getSalaryRecordsQuerySchema.safeParse(req.query);
             if (!parseResult.success) {
                 return res.status(400).json({ error: parseResult.error });
             }
-            const result = await salaryService.findAll(parseResult.data);
+            const userId = req.user!.id;
+            const result = await salaryService.findAll(userId, parseResult.data);
             res.json(result);
         } catch (error) {
             console.error(error);
@@ -50,9 +52,10 @@ export class SalaryController {
         }
     }
 
-    async findById(req: Request, res: Response) {
+    async findById(req: any, res: Response) {
         try {
-            const result = await salaryService.findById(req.params.id);
+            const userId = req.user!.id;
+            const result = await salaryService.findById(userId, req.params.id);
             if (!result) {
                 return res.status(404).json({ error: 'Salary record not found' });
             }
@@ -63,9 +66,10 @@ export class SalaryController {
         }
     }
 
-    async delete(req: Request, res: Response) {
+    async delete(req: any, res: Response) {
         try {
-            await salaryService.delete(req.params.id);
+            const userId = req.user!.id;
+            await salaryService.delete(userId, req.params.id);
             res.status(204).send();
         } catch (error) {
             console.error(error);

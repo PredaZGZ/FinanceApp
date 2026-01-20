@@ -1,8 +1,12 @@
 import { Router } from 'express';
 import { salaryController } from './salary.controller';
 import { createDiskUploader } from '../../common/utils/fileUpload';
+import { authenticateToken } from '../auth/auth.middleware';
 
 const router = Router();
+
+// Protect all salary routes
+router.use(authenticateToken);
 
 const upload = createDiskUploader('salary');
 

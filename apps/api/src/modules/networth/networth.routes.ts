@@ -1,7 +1,10 @@
 import { Router } from 'express';
 import { netWorthController } from './networth.controller';
+import { authenticateToken } from '../auth/auth.middleware';
 
 const router = Router();
+
+router.use(authenticateToken);
 
 // Assets
 router.post('/assets', netWorthController.createAsset);

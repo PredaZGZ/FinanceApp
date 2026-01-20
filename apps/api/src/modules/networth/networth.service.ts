@@ -10,15 +10,15 @@ import type {
 
 export class NetWorthService {
 
-    async createAsset(data: CreateAssetBody) {
+    async createAsset(userId: string, data: CreateAssetBody) {
         const client = await pool.connect();
         try {
             await client.query('BEGIN');
 
             // Create Asset
             const insertAssetQuery = `
-        INSERT INTO networth_assets (name, description, category, "originalCost", "originalCurrency", notes, "createdAt", "updatedAt")
-        VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+        INSERT INTO networth_assets (name, description, category, "originalCost", "originalCurrency", notes, "userId", "createdAt", "updatedAt")
+        VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
         RETURNING *
       `;
             const assetRes = await client.query(insertAssetQuery, [
@@ -27,7 +27,8 @@ export class NetWorthService {
                 data.category || null,
                 data.originalCost,
                 data.originalCurrency,
-                data.notes || null
+                data.notes || null,
+                userId
             ]);
             const asset = assetRes.rows[0];
 
@@ -61,12 +62,12 @@ export class NetWorthService {
         }
     }
 
-    async getAssets(filters: GetAssetsQuery) {
+    async getAssets(userId: string, filters: GetAssetsQuery) {
         const { page, limit, sortBy, sortOrder, q, category, isSold, minValue, maxValue } = filters;
         const offset = (page - 1) * limit;
 
-        const queryParams: any[] = [];
-        let paramIndex = 1;
+        const queryParams: any[] = [userId];
+        let paramIndex = 2; // Start from 2, $1 is userId
 
         // Base query with latest valuation join
         // We use a LATERAL JOIN or Subquery to get the latest valuation
@@ -84,7 +85,7 @@ export class NetWorthService {
         count(*) OVER() as full_count
       FROM networth_assets a
       LEFT JOIN LatestValuations v ON a.id = v."assetId"
-      WHERE 1=1
+      WHERE a."userId" = $1
     `;
 
         if (q) {
@@ -147,7 +148,7 @@ export class NetWorthService {
         };
     }
 
-    async getAssetById(id: string) {
+    async getAssetById(userId: string, id: string) {
         // Get asset and latest valuation
         const query = `
       SELECT 
@@ -159,9 +160,9 @@ export class NetWorthService {
            LIMIT 1
         ) v_row) as "latestValuation"
       FROM networth_assets a
-      WHERE a.id = $1
+      WHERE a.id = $1 AND a."userId" = $2
     `;
-        const result = await pool.query(query, [id]);
+        const result = await pool.query(query, [id, userId]);
         if (result.rows.length === 0) return null;
 
         const row = result.rows[0];
@@ -175,14 +176,14 @@ export class NetWorthService {
         };
     }
 
-    async updateAsset(id: string, data: UpdateAssetBody) {
+    async updateAsset(userId: string, id: string, data: UpdateAssetBody) {
         // Full replacement of asset fields, but keeping history.
         // If user wants to update value, they should use addValuation.
         // Here we update descriptive fields and sold status.
         const query = `
       UPDATE networth_assets
       SET name = $1, description = $2, category = $3, "originalCost" = $4, "originalCurrency" = $5, notes = $6, "isSold" = $7, "soldAt" = $8, "updatedAt" = NOW()
-      WHERE id = $9
+      WHERE id = $9 AND "userId" = $10
       RETURNING *
     `;
         const params = [
@@ -194,14 +195,15 @@ export class NetWorthService {
             data.notes || null,
             data.isSold ?? false,
             data.soldAt || null,
-            id
+            id,
+            userId
         ];
 
         const result = await pool.query(query, params);
         return result.rows[0];
     }
 
-    async patchAsset(id: string, data: PatchAssetBody) {
+    async patchAsset(userId: string, id: string, data: PatchAssetBody) {
         // Build dynamic update query
         const updates: string[] = [];
         const values: any[] = [];
@@ -216,26 +218,32 @@ export class NetWorthService {
         if (data.isSold !== undefined) { updates.push(`"isSold" = $${paramIndex++}`); values.push(data.isSold); }
         if (data.soldAt !== undefined) { updates.push(`"soldAt" = $${paramIndex++}`); values.push(data.soldAt); }
 
-        if (updates.length === 0) return this.getAssetById(id);
+        if (updates.length === 0) return this.getAssetById(userId, id);
 
         updates.push(`"updatedAt" = NOW()`);
+
+        // Add ID and UserID for WHERE
         values.push(id);
-        const query = `UPDATE networth_assets SET ${updates.join(', ')} WHERE id = $${paramIndex} RETURNING *`;
+        const idIndex = paramIndex++;
+        values.push(userId);
+        const userIdIndex = paramIndex++;
+
+        const query = `UPDATE networth_assets SET ${updates.join(', ')} WHERE id = $${idIndex} AND "userId" = $${userIdIndex} RETURNING *`;
 
         const result = await pool.query(query, values);
         return result.rows[0];
     }
 
-    async deleteAsset(id: string) {
+    async deleteAsset(userId: string, id: string) {
         // Hard delete with cascade (defined in migration)
-        const query = `DELETE FROM networth_assets WHERE id = $1 RETURNING id`;
-        const result = await pool.query(query, [id]);
+        const query = `DELETE FROM networth_assets WHERE id = $1 AND "userId" = $2 RETURNING id`;
+        const result = await pool.query(query, [id, userId]);
         return result.rows.length > 0;
     }
 
-    async addValuation(assetId: string, data: CreateValuationBody) {
-        // Check if asset exists
-        const assetCheck = await pool.query('SELECT "isSold" FROM networth_assets WHERE id = $1', [assetId]);
+    async addValuation(userId: string, assetId: string, data: CreateValuationBody) {
+        // Check if asset exists and belongs to user
+        const assetCheck = await pool.query('SELECT "isSold" FROM networth_assets WHERE id = $1 AND "userId" = $2', [assetId, userId]);
         if (assetCheck.rows.length === 0) throw new Error('Asset not found');
         if (assetCheck.rows[0].isSold) throw new Error('Cannot add valuation to a sold asset');
 
@@ -259,7 +267,11 @@ export class NetWorthService {
         };
     }
 
-    async getValuations(assetId: string, query: GetValuationsQuery) {
+    async getValuations(userId: string, assetId: string, query: GetValuationsQuery) {
+        // Verify ownership
+        const assetCheck = await pool.query('SELECT 1 FROM networth_assets WHERE id = $1 AND "userId" = $2', [assetId, userId]);
+        if (assetCheck.rows.length === 0) throw new Error('Asset not found');
+
         const { page, limit, from, to } = query;
         const offset = (page - 1) * limit;
         const params: any[] = [assetId];
@@ -302,35 +314,9 @@ export class NetWorthService {
         };
     }
 
-    async getSummary() {
+    async getSummary(userId: string) {
         // Current Net Worth: Sum of latest value of UNSOLD assets.
-        // If an asset has no valuation, it contributes 0 (or original cost? Prompt says "0 o excluir"). I'll use 0.
-
-        // Complex query to get latest valuation per asset and aggregate
-        const query = `
-      WITH LatestValuations AS (
-        SELECT DISTINCT ON ("assetId") "assetId", value
-        FROM networth_asset_valuations
-        ORDER BY "assetId", "valuedAt" DESC, "createdAt" DESC
-      )
-      SELECT
-        COALESCE(SUM(v.value), 0) as "totalCurrentNetWorth",
-        COUNT(CASE WHEN a."isSold" = FALSE THEN 1 END) as "countActive",
-        COUNT(CASE WHEN a."isSold" = TRUE THEN 1 END) as "countSold",
-        json_agg(json_build_object(
-           'category', a.category, 
-           'value', COALESCE(v.value, 0)
-        )) as breakdown_data
-      FROM networth_assets a
-      LEFT JOIN LatestValuations v ON a.id = v."assetId"
-      WHERE a."isSold" = FALSE
-    `;
-
-        // Breakdown needs to be grouped. The above query aggregates everything, so breakdown_data would be a list of all items. 
-        // We want grouped by category.
-        // Let's do a separate query or nested structure.
-
-        // Better approach:
+        // We filter assets by userId
 
         const summaryQuery = `
       WITH LatestValuations AS (
@@ -343,10 +329,10 @@ export class NetWorthService {
           COUNT(*) as "countActive"
       FROM networth_assets a
       LEFT JOIN LatestValuations v ON a.id = v."assetId"
-      WHERE a."isSold" = FALSE
+      WHERE a."isSold" = FALSE AND a."userId" = $1
     `;
 
-        const countSoldQuery = `SELECT COUNT(*) as "countSold" FROM networth_assets WHERE "isSold" = TRUE`;
+        const countSoldQuery = `SELECT COUNT(*) as "countSold" FROM networth_assets WHERE "isSold" = TRUE AND "userId" = $1`;
 
         const breakdownQuery = `
       WITH LatestValuations AS (
@@ -360,14 +346,14 @@ export class NetWorthService {
           COUNT(*) as count
       FROM networth_assets a
       LEFT JOIN LatestValuations v ON a.id = v."assetId"
-      WHERE a."isSold" = FALSE
+      WHERE a."isSold" = FALSE AND a."userId" = $1
       GROUP BY a.category
     `;
 
         const [summaryRes, soldRes, breakdownRes] = await Promise.all([
-            pool.query(summaryQuery),
-            pool.query(countSoldQuery),
-            pool.query(breakdownQuery)
+            pool.query(summaryQuery, [userId]),
+            pool.query(countSoldQuery, [userId]),
+            pool.query(breakdownQuery, [userId])
         ]);
 
         const summary = summaryRes.rows[0];

@@ -18,7 +18,7 @@ interface Movement {
 }
 
 export class MyInvestorService {
-    async processFiles(movementsBuffer: Buffer, ordersBuffer?: Buffer): Promise<{ tradesCount: number, transfersCount: number }> {
+    async processFiles(userId: string, movementsBuffer: Buffer, ordersBuffer?: Buffer): Promise<{ tradesCount: number, transfersCount: number }> {
         const client = await pool.connect();
         try {
             await client.query('BEGIN');
@@ -114,8 +114,8 @@ export class MyInvestorService {
                     const price = Math.abs(movement.amount) / quantity;
 
                     await client.query(
-                        `INSERT INTO stock_trades (id, date, currency, symbol, type, quantity, price, side, value, fees, commission, source, "updatedAt")
-                         VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'myinvestor_movements', NOW())
+                        `INSERT INTO stock_trades (id, date, currency, symbol, type, quantity, price, side, value, fees, commission, source, "updatedAt", "userId")
+                         VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'myinvestor_movements', NOW(), $11)
                          ON CONFLICT (date, currency, symbol, side, quantity, price) DO NOTHING`,
                         [
                             movement.dateOp,
@@ -126,7 +126,8 @@ export class MyInvestorService {
                             price,
                             tradeSide,
                             Math.abs(movement.amount),
-                            0, 0
+                            0, 0,
+                            userId
                         ]
                     );
                     tradesCount++;
@@ -136,15 +137,16 @@ export class MyInvestorService {
                     const type = this.classifyTransferType(movement.concepto, movement.amount);
 
                     await client.query(
-                        `INSERT INTO cash_transfers (id, date, currency, type, value, fees, commission, "eurCost", "conversionRate", "skippedConversion", source, "updatedAt")
-                         VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, 'myinvestor_movements', NOW())
+                        `INSERT INTO cash_transfers (id, date, currency, type, value, fees, commission, "eurCost", "conversionRate", "skippedConversion", source, "updatedAt", "userId")
+                         VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, 'myinvestor_movements', NOW(), $10)
                          ON CONFLICT (date, currency, type, value) DO NOTHING`,
                         [
                             movement.dateOp,
                             movement.currency,
                             type,
                             Math.abs(movement.amount),
-                            0, 0, null, null, false
+                            0, 0, null, null, false,
+                            userId
                         ]
                     );
                     transfersCount++;
