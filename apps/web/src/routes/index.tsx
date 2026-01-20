@@ -2,6 +2,7 @@ import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom"
 import AuthLayout from "@/layouts/AuthLayout";
 import MainLayout from "@/layouts/MainLayout";
 import LoginPage from "@/pages/auth/LoginPage";
+import SignUpPage from "@/pages/auth/SignUpPage";
 import DashboardPage from "@/pages/dashboard/DashboardPage";
 import PortfolioPage from "@/pages/portfolio/PortfolioPage";
 import PortfolioAnalysisPage from "@/pages/portfolio/PortfolioAnalysisPage";
@@ -13,12 +14,15 @@ import { transactionsRoutes } from "./transactions.routes";
 
 const router = createBrowserRouter([
   {
-    path: "/login",
     element: <AuthLayout />,
     children: [
       {
-        path: "",
+        path: "/login",
         element: <LoginPage />,
+      },
+      {
+        path: "/register",
+        element: <SignUpPage />,
       },
     ],
   },
