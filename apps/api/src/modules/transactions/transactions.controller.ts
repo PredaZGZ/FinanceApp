@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import { transactionsService } from './transactions.service';
-import { getTransactionsSchema } from './transactions.schema';
+import { getTransactionsSchema, updateConversionSchema } from './transactions.schema';
 
 export class TransactionsController {
     async getTransactions(req: any, res: Response) {
@@ -35,15 +35,15 @@ export class TransactionsController {
 
     async updateConversion(req: any, res: Response) {
         try {
-            // We can validate body here or use middleware/zod
-            const { eurCost } = req.body;
-            const { id } = req.params;
-            const userId = req.user!.id;
-
-            if (!eurCost || typeof eurCost !== 'number') {
-                res.status(400).json({ error: 'Invalid eurCost' });
+            const validation = updateConversionSchema.safeParse({ params: req.params, body: req.body });
+            if (!validation.success) {
+                res.status(400).json({ error: 'Invalid input', details: validation.error.format() });
                 return;
             }
+
+            const { eurCost } = validation.data.body;
+            const { id } = validation.data.params;
+            const userId = req.user!.id;
 
             const result = await transactionsService.updateTransactionConversion(userId, id, eurCost);
             res.json({ data: result });

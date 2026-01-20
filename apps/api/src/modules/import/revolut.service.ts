@@ -1,6 +1,6 @@
 import { createRequire } from 'module';
-import type { RevolutStatement, CurrencyData, StockTrade, CashTransfer, PortfolioItem, AccountSummary } from '../common/types/revolut.js';
-import pool from '../common/db/client';
+import type { RevolutStatement, CurrencyData, StockTrade, CashTransfer, PortfolioItem, AccountSummary } from '../../common/types/revolut.js';
+import pool from '../../common/db/client';
 
 const require = createRequire(import.meta.url);
 
@@ -313,7 +313,7 @@ export class RevolutService {
             } else {
                 // Log other potential transaction types
                 if (transactionText.length > 20) { // Ignore short noise
-                    console.log(`[RevolutService] Skipped line: "${transactionText}"`);
+                    // console.log(`[RevolutService] Skipped line: "${transactionText}"`);
                 }
             }
         }

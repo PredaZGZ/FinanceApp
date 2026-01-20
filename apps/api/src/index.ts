@@ -25,9 +25,9 @@ app.use(limiter);
 
 // Stricter Rate Limiting for Auth
 const authLimiter = rateLimit({
-    windowMs: 60 * 60 * 1000, // 1 hour
-    max: 10, // Limit each IP to 10 logins/registrations per hour
-    message: "Too many login attempts from this IP, please try again after an hour"
+    windowMs: 30 * 60 * 1000, // 30 minutes
+    max: 25, // Limit each IP to 25 requests per windowMs
+    message: "Too many login attempts from this IP, please try again after 30 minutes"
 });
 app.use("/auth", authLimiter);
 
@@ -36,7 +36,11 @@ import { errorHandler } from "./common/middleware/errorHandler";
 import { requestLogger } from "./common/middleware/requestLogger";
 
 // CORS Configuration
-const allowedOrigins = [process.env.FRONTEND_URL || 'http://localhost:5173', 'http://127.0.0.1:5173'];
+const allowedOrigins = [
+    process.env.FRONTEND_URL || 'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    'http://localhost:5173'
+];
 app.use(cors({
     origin: (origin, callback) => {
         // allow requests with no origin (like mobile apps or curl requests)

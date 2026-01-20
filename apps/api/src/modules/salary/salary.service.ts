@@ -59,16 +59,17 @@ export class SalaryService {
             params.push(to);
         }
 
-        const totalRes = await pool.query(`SELECT COUNT(*) FROM salary_records ${whereClause}`, params.slice(2));
-        const total = parseInt(totalRes.rows[0].count, 10);
-
         const dataRes = await pool.query(
-            `SELECT * FROM salary_records ${whereClause} ORDER BY date DESC LIMIT $1 OFFSET $2`,
+            `SELECT *, count(*) OVER() as full_count FROM salary_records ${whereClause} ORDER BY date DESC LIMIT $1 OFFSET $2`,
             params
         );
 
+        const rows = dataRes.rows;
+        const total = rows.length > 0 ? parseInt(rows[0].full_count, 10) : 0;
+        const data = rows.map(({ full_count, ...rest }) => rest);
+
         return {
-            data: dataRes.rows,
+            data,
             meta: {
                 total,
                 page,

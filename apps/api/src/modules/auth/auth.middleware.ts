@@ -25,7 +25,8 @@ export const authenticateToken = (req: AuthRequest, res: Response, next: NextFun
             return;
         }
 
-        req.user = user as { id: string };
+        const payload = user as { userId: string };
+        req.user = { id: payload.userId };
         next();
     });
 };

@@ -1,4 +1,4 @@
-import pool from '../common/db/client';
+import pool from '../../common/db/client';
 
 interface Order {
     date: Date;

@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "identifier": "com.financeapp.desktop",
   "build": {
-    "devUrl": "http://127.0.0.1:5173",
+    "devUrl": "http://localhost:5173",
     "frontendDist": "../../web/dist"
   },
   "app": {

@@ -1,5 +1,5 @@
-import { revolutService } from '../../services/revolut.service';
-import { myInvestorService } from '../../services/myinvestor.service';
+import { revolutService } from './revolut.service';
+import { myInvestorService } from './myinvestor.service';
 import pool from '../../common/db/client';
 
 export class ImportService {
