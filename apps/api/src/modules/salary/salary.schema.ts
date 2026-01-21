@@ -7,7 +7,7 @@ export const breakdownItemSchema = z.object({
 });
 
 export const createSalaryRecordSchema = z.object({
-    date: z.string().datetime(), // ISO string from frontend
+    date: z.string(), // ISO string from frontend (YYYY-MM-DD is fine for postgres)
     grossSalary: z.number().optional(),
     netSalary: z.number().optional(),
     company: z.string().optional(),

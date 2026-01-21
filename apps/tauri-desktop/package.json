@@ -6,7 +6,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "env -u WAYLAND_DISPLAY DISPLAY=:0 XDG_SESSION_TYPE=x11 GDK_BACKEND=x11 WEBKIT_DISABLE_DMABUF_RENDERER=1 sh -c \"pnpm --filter web dev -- --host 127.0.0.1 & wait-on http://127.0.0.1:5173 && pnpm exec tauri dev\"",
+    "dev": "env -u WAYLAND_DISPLAY DISPLAY=:0 XDG_SESSION_TYPE=x11 GDK_BACKEND=x11 WEBKIT_DISABLE_DMABUF_RENDERER=1 sh -c \"pnpm --filter web dev -- --host localhost & wait-on http://localhost:5173 && pnpm exec tauri dev\"",
     "dev:soft": "env -u WAYLAND_DISPLAY DISPLAY=:0 XDG_SESSION_TYPE=x11 GDK_BACKEND=x11 WEBKIT_DISABLE_DMABUF_RENDERER=1 LIBGL_ALWAYS_SOFTWARE=1 pnpm exec tauri dev",
     "build": "pnpm exec tauri build"
   },

@@ -3,10 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, Upload, CalendarIcon, Building, DollarSign, FileText } from "lucide-react";
+import { Plus, Trash2, Upload, CalendarIcon, Building, DollarSign, FileText, Sparkles, Copy } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import type { CreateSalaryInput, SalaryRecord } from "./salary.types";
 import { postAPI } from "@/lib/api";
 import { Card, CardContent } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
 interface SalaryFormProps {
@@ -16,6 +18,7 @@ interface SalaryFormProps {
 
 export default function SalaryForm({ onSuccess, onCancel }: SalaryFormProps) {
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const [formData, setFormData] = useState<CreateSalaryInput>({
         date: new Date().toISOString().split('T')[0],
         grossSalary: 0,
@@ -46,9 +49,59 @@ export default function SalaryForm({ onSuccess, onCancel }: SalaryFormProps) {
         }));
     };
 
+    const [showAiHelper, setShowAiHelper] = useState(false);
+    const [jsonInput, setJsonInput] = useState("");
+    const [parseError, setParseError] = useState(false);
+
+    const aiPrompt = `Act as a Payroll Data Extractor.
+Extract the following information from the attached payroll/invoice text or image:
+1. Date (YYYY-MM-DD)
+2. Company Name
+3. Gross Salary (Total Devengado) - Number
+4. Net Salary (Líquido a Percibir) - Number
+5. Breakdown items (Include BOTH payments and deductions/taxes).
+
+Output ONLY valid JSON in this exact format:
+{
+  "date": "YYYY-MM-DD",
+  "company": "Company Name",
+  "grossSalary": 2500.00,
+  "netSalary": 1950.50,
+  "breakdown": [
+    { "concept": "Salario Base", "amount": 2500, "type": "payment" },
+    { "concept": "IRPF", "amount": 400, "type": "deduction" },
+    { "concept": "Seguridad Social", "amount": 149.50, "type": "deduction" }
+  ]
+}`;
+
+    const handleCopyPrompt = () => {
+        navigator.clipboard.writeText(aiPrompt);
+    };
+
+    const handleFillForm = () => {
+        try {
+            const parsed = JSON.parse(jsonInput);
+            if (parsed) {
+                setFormData(prev => ({
+                    ...prev,
+                    date: parsed.date || prev.date,
+                    company: parsed.company || prev.company,
+                    grossSalary: typeof parsed.grossSalary === 'number' ? parsed.grossSalary : prev.grossSalary,
+                    netSalary: typeof parsed.netSalary === 'number' ? parsed.netSalary : prev.netSalary,
+                    breakdown: Array.isArray(parsed.breakdown) ? parsed.breakdown : prev.breakdown
+                }));
+                setShowAiHelper(false);
+                setParseError(false);
+            }
+        } catch (err) {
+            setParseError(true);
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
+        setError(null);
         try {
             const data = { ...formData, file: file || undefined };
             const form = new FormData();
@@ -66,8 +119,9 @@ export default function SalaryForm({ onSuccess, onCancel }: SalaryFormProps) {
 
             await postAPI<SalaryRecord>('/salary', form);
             onSuccess();
-        } catch (error) {
-            console.error(error);
+        } catch (err: any) {
+            console.error(err);
+            setError(err.message || "Failed to save salary record. Please try again.");
         } finally {
             setLoading(false);
         }
@@ -75,6 +129,68 @@ export default function SalaryForm({ onSuccess, onCancel }: SalaryFormProps) {
 
     return (
         <form onSubmit={handleSubmit} className="space-y-8">
+            <Dialog open={showAiHelper} onOpenChange={setShowAiHelper}>
+                <div className="flex justify-end">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        className="bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100"
+                        onClick={() => setShowAiHelper(true)}
+                    >
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        AI Auto-fill
+                    </Button>
+                </div>
+
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Sparkles className="w-5 h-5 text-indigo-600" />
+                            AI Payroll Extractor
+                        </DialogTitle>
+                        <DialogDescription>
+                            Use Gemini or ChatGPT to extract data from your PDF.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <Label className="text-xs font-semibold uppercase text-muted-foreground">Step 1: Copy Prompt</Label>
+                            <div className="flex gap-2">
+                                <Button type="button" variant="secondary" size="sm" onClick={handleCopyPrompt} className="w-full">
+                                    <Copy className="w-3 h-3 mr-2" />
+                                    Copy Extraction Prompt
+                                </Button>
+                            </div>
+                            <p className="text-[10px] text-muted-foreground">
+                                Paste this prompt along with your PDF file into your AI chat.
+                            </p>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label className="text-xs font-semibold uppercase text-muted-foreground">Step 2: Paste JSON Response</Label>
+                            <Textarea
+                                placeholder='Paste the JSON here (e.g. { "company": "...", ... })'
+                                className={cn("font-mono text-xs h-32 resize-none", parseError ? "border-red-500 focus-visible:ring-red-500" : "")}
+                                value={jsonInput}
+                                onChange={(e) => {
+                                    setJsonInput(e.target.value);
+                                    setParseError(false);
+                                }}
+                            />
+                            {parseError && <p className="text-xs text-red-500">Invalid JSON. Please check the format.</p>}
+                        </div>
+                    </div>
+
+                    <DialogFooter>
+                        <Button type="button" variant="secondary" onClick={() => setShowAiHelper(false)}>Cancel</Button>
+                        <Button type="button" onClick={handleFillForm} disabled={!jsonInput.trim()}>
+                            Auto-fill Form
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                     <h3 className="text-lg font-semibold flex items-center gap-2">
@@ -154,7 +270,7 @@ export default function SalaryForm({ onSuccess, onCancel }: SalaryFormProps) {
                 >
                     <input
                         type="file"
-                        accept=".pdf,image/*"
+                        accept="application/pdf,image/*"
                         className="absolute inset-0 opacity-0 cursor-pointer z-10"
                         onChange={e => setFile(e.target.files?.[0] || null)}
                     />
@@ -250,6 +366,11 @@ export default function SalaryForm({ onSuccess, onCancel }: SalaryFormProps) {
                 />
             </div>
 
+            {error && (
+                <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md border border-destructive/20">
+                    {error}
+                </div>
+            )}
             <div className="flex justify-end gap-3 pt-6 border-t">
                 <Button type="button" variant="outline" onClick={onCancel} size="lg">Cancel</Button>
                 <Button type="submit" disabled={loading} size="lg" className="px-8">

@@ -1,13 +1,19 @@
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
 export async function fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> {
+    const headers = {
+        "Content-Type": "application/json",
+        ...options?.headers,
+    } as Record<string, string>;
+
+    if (options?.body instanceof FormData) {
+        delete headers["Content-Type"];
+    }
+
     const response = await fetch(`${API_URL}${endpoint}`, {
         credentials: "include",
         ...options,
-        headers: {
-            "Content-Type": "application/json",
-            ...options?.headers,
-        },
+        headers,
     });
 
     if (!response.ok) {
