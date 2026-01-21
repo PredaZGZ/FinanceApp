@@ -39,6 +39,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/multer": "^2.0.0",
     "@types/node": "^24.10.1",
+    "@types/pdfjs-dist": "^2.10.378",
     "@types/pg": "^8.10.9",
     "nodemon": "^3.1.11",
     "tsx": "^4.20.6",

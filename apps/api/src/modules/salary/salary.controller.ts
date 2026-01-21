@@ -1,6 +1,9 @@
 import { Request, Response } from 'express';
 import { salaryService } from './salary.service';
 import { createSalaryRecordSchema, getSalaryRecordsQuerySchema, breakdownItemSchema } from './salary.schema';
+import fs from 'fs';
+import { salaryPasswordService } from '../salary-password/salary-password.service';
+import { decrypt } from '../../common/utils/encryption';
 
 export class SalaryController {
     async create(req: any, res: Response) {
@@ -113,6 +116,56 @@ export class SalaryController {
         } catch (error) {
             console.error(error);
             res.status(500).json({ error: 'Internal Server Error' });
+        }
+    }
+
+    async validateFile(req: any, res: Response) {
+        let filePath = req.file?.path;
+        try {
+            if (!req.file) return res.status(400).json({ error: "No file provided" });
+
+            // Images usually don't have pdf-like encryption
+            if (!req.file.mimetype.includes('pdf')) {
+                return res.json({ isLocked: false });
+            }
+
+            const buffer = fs.readFileSync(filePath);
+
+            // 1. Try opening without password
+            try {
+                // @ts-ignore
+                await pdf(buffer);
+                return res.json({ isLocked: false });
+            } catch (e) {
+                // Likely encrypted
+            }
+
+            // 2. Try saved passwords
+            const userId = req.user!.id;
+            const savedPasswords = await salaryPasswordService.findAllWithSecrets(userId);
+
+            for (const sp of savedPasswords) {
+                try {
+                    const plain = decrypt(sp.encryptedPassword, sp.iv);
+                    // @ts-ignore
+                    await pdf(buffer, { password: plain });
+                    return res.json({ isLocked: false, password: plain });
+                } catch (e) {
+                    // Wrong password
+                }
+            }
+
+            // 3. Exhausted options, it is locked
+            return res.json({ isLocked: true });
+
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ error: 'Internal Server Error' });
+        } finally {
+            // Always cleanup the temp file
+            if (filePath && fs.existsSync(filePath)) {
+                try { fs.unlinkSync(filePath); } catch { }
+            }
         }
     }
 }

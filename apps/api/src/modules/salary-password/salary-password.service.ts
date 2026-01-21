@@ -25,6 +25,14 @@ export class SalaryPasswordService {
         return res.rows;
     }
 
+    async findAllWithSecrets(userId: string) {
+        const res = await pool.query(
+            `SELECT id, "encryptedPassword", "iv" FROM salary_pdf_passwords WHERE "userId" = $1`,
+            [userId]
+        );
+        return res.rows;
+    }
+
     async delete(userId: string, id: string) {
         await pool.query(
             `DELETE FROM salary_pdf_passwords WHERE id = $1 AND "userId" = $2`,
