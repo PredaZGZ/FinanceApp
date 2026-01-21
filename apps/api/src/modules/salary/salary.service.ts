@@ -99,6 +99,61 @@ export class SalaryService {
         // Ensure user owns the record
         await pool.query('DELETE FROM salary_records WHERE id = $1 AND "userId" = $2', [id, userId]);
     }
+
+    async update(userId: string, id: string, data: CreateSalaryRecordInput, file?: Express.Multer.File) {
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+
+            const check = await client.query('SELECT id FROM salary_records WHERE id = $1 AND "userId" = $2', [id, userId]);
+            if (check.rows.length === 0) {
+                await client.query('ROLLBACK');
+                return null;
+            }
+
+            const { date, grossSalary, netSalary, company, notes, breakdown } = data;
+
+            // Update base record
+            let query = `UPDATE salary_records SET date = $1, "grossSalary" = $2, "netSalary" = $3, company = $4, notes = $5`;
+            const params: any[] = [date, grossSalary, netSalary, company, notes];
+            let pIdx = 6;
+
+            if (file) {
+                query += `, "fileName" = $${pIdx++}, "fileStorageKey" = $${pIdx++}`;
+                params.push(file.originalname, file.path);
+            }
+
+            query += ` WHERE id = $${pIdx}`;
+            params.push(id);
+
+            await client.query(query, params);
+
+            // Update Breakdown
+            if (breakdown) {
+                // Remove old
+                await client.query('DELETE FROM salary_breakdown_items WHERE "salaryId" = $1', [id]);
+
+                // Add new
+                if (breakdown.length > 0) {
+                    for (const item of breakdown) {
+                        await client.query(
+                            `INSERT INTO salary_breakdown_items ("salaryId", concept, amount, type)
+                             VALUES ($1, $2, $3, $4)`,
+                            [id, item.concept, item.amount, item.type]
+                        );
+                    }
+                }
+            }
+
+            await client.query('COMMIT');
+            return { id };
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
+        }
+    }
 }
 
 export const salaryService = new SalaryService();

@@ -135,3 +135,15 @@ CREATE INDEX IF NOT EXISTS idx_salary_records_user_id ON salary_records("userId"
 CREATE INDEX IF NOT EXISTS idx_salary_records_date ON salary_records(date);
 CREATE INDEX IF NOT EXISTS idx_salary_breakdown_items_salary_id ON salary_breakdown_items("salaryId");
 CREATE INDEX IF NOT EXISTS idx_import_history_user_id ON import_history("userId");
+
+-- Salary PDF Passwords
+CREATE TABLE IF NOT EXISTS salary_pdf_passwords (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "userId" UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    "encryptedPassword" TEXT NOT NULL,
+    "iv" TEXT NOT NULL,
+    label TEXT,
+    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_salary_pdf_passwords_user_id ON salary_pdf_passwords("userId");

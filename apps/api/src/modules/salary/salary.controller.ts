@@ -76,6 +76,45 @@ export class SalaryController {
             res.status(500).json({ error: 'Internal Server Error' });
         }
     }
+
+    async update(req: any, res: Response) {
+        try {
+            // breakdown comes as a JSON string in multipart
+            let breakdown = [];
+            if (req.body.breakdown) {
+                try {
+                    breakdown = typeof req.body.breakdown === 'string' ? JSON.parse(req.body.breakdown) : req.body.breakdown;
+                } catch (e) {
+                    return res.status(400).json({ error: 'Invalid breakdown format' });
+                }
+            }
+
+            const body = {
+                ...req.body,
+                // Convert string numbers to actual numbers if present
+                grossSalary: req.body.grossSalary ? parseFloat(req.body.grossSalary) : undefined,
+                netSalary: req.body.netSalary ? parseFloat(req.body.netSalary) : undefined,
+                breakdown,
+            };
+
+            const parseResult = createSalaryRecordSchema.safeParse(body);
+            if (!parseResult.success) {
+                return res.status(400).json({ error: parseResult.error });
+            }
+
+            const userId = req.user!.id;
+            const result = await salaryService.update(userId, req.params.id, parseResult.data, req.file);
+
+            if (!result) {
+                return res.status(404).json({ error: "Record not found" });
+            }
+
+            res.json(result);
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ error: 'Internal Server Error' });
+        }
+    }
 }
 
 export const salaryController = new SalaryController();
