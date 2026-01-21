@@ -45,7 +45,12 @@ app.use(cors({
     origin: (origin, callback) => {
         // allow requests with no origin (like mobile apps or curl requests)
         if (!origin) return callback(null, true);
-        if (allowedOrigins.indexOf(origin) === -1) {
+
+        // Dynamic check for localhost/127.0.0.1 to avoid port mismatch issues during dev
+        const isLocal = origin.match(/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/);
+        const isAllowed = allowedOrigins.includes(origin) || isLocal;
+
+        if (!isAllowed) {
             var msg = 'The CORS policy for this site does not allow access from the specified Origin.';
             return callback(new Error(msg), false);
         }

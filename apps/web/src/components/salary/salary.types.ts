@@ -25,6 +25,7 @@ export interface CreateSalaryInput {
     notes?: string;
     breakdown: Omit<BreakdownItem, 'id'>[];
     file?: File;
+    pdfPassword?: string;
 }
 
 export interface Meta {

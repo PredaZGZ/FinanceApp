@@ -23,6 +23,7 @@
     "date-fns": "^4.1.0",
     "filepond": "^4.32.10",
     "lucide-react": "^0.555.0",
+    "pdfjs-dist": "^5.4.530",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-filepond": "^7.1.3",

@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Trash2, FileText, Eye, TrendingUp, DollarSign, Calendar } from "lucide-react";
+import { Trash2, FileText, TrendingUp, DollarSign, Calendar, Pencil } from "lucide-react";
 import type { SalaryRecord, SalaryListResponse } from "./salary.types";
 import { fetchAPI } from "@/lib/api";
 import { format } from "date-fns";
@@ -18,9 +18,10 @@ import { Badge } from "@/components/ui/badge";
 interface SalaryListProps {
     refreshTrigger: number;
     onView: (id: string) => void;
+    onEdit: (salary: SalaryRecord) => void;
 }
 
-export default function SalaryList({ refreshTrigger, onView }: SalaryListProps) {
+export default function SalaryList({ refreshTrigger, onView, onEdit }: SalaryListProps) {
     const [salaries, setSalaries] = useState<SalaryRecord[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -52,7 +53,7 @@ export default function SalaryList({ refreshTrigger, onView }: SalaryListProps) 
     };
 
     // Calculate stats
-    const totalNet = salaries.reduce((acc, curr) => acc + (curr.netSalary || 0), 0);
+    const totalNet = salaries.reduce((acc, curr) => acc + Number(curr.netSalary || 0), 0);
     const averageNet = salaries.length > 0 ? totalNet / salaries.length : 0;
     const lastMonth = salaries.length > 0 ? salaries[0].netSalary : 0; // Assuming sorted by date DESC
 
@@ -142,9 +143,13 @@ export default function SalaryList({ refreshTrigger, onView }: SalaryListProps) 
                                         )}
                                     </TableCell>
                                     <TableCell className="text-right pr-6">
-                                        <div className="flex justify-end gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
-                                            <Button variant="ghost" size="icon" onClick={() => onView(salary.id)}>
-                                                <Eye className="w-4 h-4 text-muted-foreground" />
+                                        <div className="flex justify-end gap-1" onClick={e => e.stopPropagation()}>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => onEdit(salary)}
+                                            >
+                                                <Pencil className="w-4 h-4 text-muted-foreground" />
                                             </Button>
                                             <Button
                                                 variant="ghost"
