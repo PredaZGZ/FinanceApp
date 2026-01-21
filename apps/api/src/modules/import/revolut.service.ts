@@ -1,21 +1,39 @@
-import { createRequire } from 'module';
 import type { RevolutStatement, CurrencyData, StockTrade, CashTransfer, PortfolioItem, AccountSummary } from '../../common/types/revolut.js';
 import pool from '../../common/db/client';
-
-const require = createRequire(import.meta.url);
-
-const pdf = require('pdf-parse');
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
+import { standardFontDataUrl } from '../../common/utils/pdf';
 
 export class RevolutService {
+    private async getTextFromPdf(buffer: Buffer): Promise<string> {
+        const loadingTask = pdfjsLib.getDocument({
+            data: new Uint8Array(buffer),
+            standardFontDataUrl,
+        });
+
+        const doc = await loadingTask.promise;
+        let fullText = '';
+
+        for (let i = 1; i <= doc.numPages; i++) {
+            const page = await doc.getPage(i);
+            const textContent = await page.getTextContent();
+            const pageText = textContent.items
+                .map((item: any) => item.str)
+                .join(' ');
+            fullText += pageText + '\n';
+        }
+
+        return fullText;
+    }
+
     async parseStatement(buffer: Buffer): Promise<RevolutStatement> {
-        let data;
+        let text = '';
         try {
-            data = await pdf(buffer);
+            text = await this.getTextFromPdf(buffer);
         } catch (error: any) {
             console.error('PDF Parse Error:', error);
             throw new Error(`Failed to parse PDF: ${error.message}`);
         }
-        const text = data.text;
+
 
         const accountInfo = this.parseAccountInfo(text);
         const currencies: CurrencyData[] = [];

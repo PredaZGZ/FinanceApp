@@ -3,7 +3,9 @@ import { salaryService } from './salary.service';
 import { createSalaryRecordSchema, getSalaryRecordsQuerySchema, breakdownItemSchema } from './salary.schema';
 import fs from 'fs';
 import { salaryPasswordService } from '../salary-password/salary-password.service';
-import { decrypt } from '../../common/utils/encryption';
+import { encrypt, decrypt } from '../../common/utils/encryption';
+import { standardFontDataUrl } from '../../common/utils/pdf';
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 
 export class SalaryController {
     async create(req: any, res: Response) {
@@ -133,11 +135,16 @@ export class SalaryController {
 
             // 1. Try opening without password
             try {
-                // @ts-ignore
-                await pdf(buffer);
+                const loadingTask = pdfjsLib.getDocument({
+                    data: new Uint8Array(buffer),
+                    standardFontDataUrl,
+                });
+                await loadingTask.promise;
                 return res.json({ isLocked: false });
-            } catch (e) {
-                // Likely encrypted
+            } catch (e: any) {
+                if (e.name !== 'PasswordException') {
+                    // unexpected error, but likely just encrypted
+                }
             }
 
             // 2. Try saved passwords
@@ -147,8 +154,14 @@ export class SalaryController {
             for (const sp of savedPasswords) {
                 try {
                     const plain = decrypt(sp.encryptedPassword, sp.iv);
-                    // @ts-ignore
-                    await pdf(buffer, { password: plain });
+
+                    const loadingTask = pdfjsLib.getDocument({
+                        data: new Uint8Array(buffer),
+                        password: plain,
+                        standardFontDataUrl,
+                    });
+                    await loadingTask.promise;
+
                     return res.json({ isLocked: false, password: plain });
                 } catch (e) {
                     // Wrong password

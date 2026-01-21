@@ -3,11 +3,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, Upload, CalendarIcon, Building, Euro, FileText, Sparkles, Image, ClipboardPaste, Copy } from "lucide-react";
+import { Plus, Trash2, Upload, CalendarIcon, Building, Euro, FileText, Sparkles, Image, ClipboardPaste, Copy, Lock, Unlock, Loader2 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
+import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist';
+
+// Configure PDF worker
+import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+GlobalWorkerOptions.workerSrc = pdfWorker;
 
 import type { CreateSalaryInput, SalaryRecord } from "./salary.types";
 import { postAPI, fetchAPI } from "@/lib/api";
+// fetchAPI handles API_URL internally.
 import { Card, CardContent } from "@/components/ui/card";
 import {
     Dialog,
@@ -55,6 +61,89 @@ export default function SalaryForm({ onSuccess, onCancel, initialData }: SalaryF
         })(),
     });
     const [file, setFile] = useState<File | null>(null);
+
+    // PDF Security State
+    const [isCheckingFile, setIsCheckingFile] = useState(false);
+    const [isLocked, setIsLocked] = useState(false);
+    const [manualPassword, setManualPassword] = useState("");
+    const [unlockError, setUnlockError] = useState<string | null>(null);
+
+    const checkFile = async (fileToCheck: File) => {
+        // Only check PDFs
+        if (fileToCheck.type !== 'application/pdf') return;
+
+        setIsCheckingFile(true);
+        setIsLocked(false);
+        setManualPassword("");
+        setUnlockError(null);
+
+        try {
+            const formData = new FormData();
+            formData.append('file', fileToCheck);
+
+            // POST to validate endpoint
+            // Try to use fetchAPI helper if it supports FormData
+            // If fetchAPI forces JSON content-type, we might need raw fetch.
+            // Assuming fetchAPI handles FormData if body is FormData (standard)
+            const response = await fetchAPI<{ isLocked: boolean; password?: string }>('/salary/validate-file', {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (response.isLocked) {
+                setIsLocked(true);
+            } else {
+                if (response.password) {
+                    // Found saved password
+                    setFormData(prev => ({ ...prev, pdfPassword: response.password! }));
+                }
+            }
+        } catch (e) {
+            console.error("File check failed", e);
+            // Fallback: don't lock, let backend handle submit error or assume unlocked
+        } finally {
+            setIsCheckingFile(false);
+        }
+    };
+
+    const handleUnlock = async () => {
+        if (!file || !manualPassword) return;
+        setUnlockError(null);
+        setIsCheckingFile(true);
+
+        try {
+            const arrayBuffer = await file.arrayBuffer();
+            const loadingTask = getDocument({
+                data: new Uint8Array(arrayBuffer),
+                password: manualPassword
+            });
+            await loadingTask.promise;
+
+            // If successful
+            setFormData(prev => ({ ...prev, pdfPassword: manualPassword }));
+            setIsLocked(false);
+            setManualPassword("");
+        } catch (e: any) {
+            if (e.name === 'PasswordException' || e.code === 1) {
+                setUnlockError("Incorrect password");
+            } else {
+                setUnlockError("Failed to open PDF");
+            }
+        } finally {
+            setIsCheckingFile(false);
+        }
+    };
+
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const selected = e.target.files?.[0] || null;
+        setFile(selected);
+        setFormData(prev => ({ ...prev, pdfPassword: "" })); // Clear old password
+        setIsLocked(false);
+        setUnlockError(null);
+        if (selected) {
+            checkFile(selected);
+        }
+    };
 
     const handleBreakdownAdd = () => {
         setFormData(prev => ({
@@ -318,37 +407,106 @@ Output ONLY valid JSON in this exact format:
                     </h3>
                     <div
                         className={cn(
-                            "border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center text-muted-foreground hover:bg-muted/50 transition-all cursor-pointer relative",
-                            file ? "border-emerald-400 bg-emerald-50/10" : "border-muted-foreground/25"
+                            "border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center text-muted-foreground hover:bg-muted/50 transition-all cursor-pointer relative min-h-[160px]",
+                            file ? (isLocked ? "border-rose-400 bg-rose-50/10" : "border-emerald-400 bg-emerald-50/10") : "border-muted-foreground/25"
                         )}
                     >
                         <input
                             type="file"
                             accept="application/pdf,image/*"
                             className="absolute inset-0 opacity-0 cursor-pointer z-10"
-                            onChange={e => setFile(e.target.files?.[0] || null)}
+                            onChange={handleFileSelect}
+                            disabled={isCheckingFile}
                         />
-                        {file ? (
-                            <div className="flex flex-col items-center z-20">
-                                <FileText className="w-10 h-10 mb-2 text-emerald-500" />
-                                <p className="text-sm font-medium text-foreground">{file.name}</p>
-                                <p className="text-xs text-muted-foreground">{(file.size / 1024).toFixed(0)} KB</p>
-                                <Button variant="ghost" size="sm" className="mt-2 text-destructive hover:text-destructive" onClick={(e) => {
-                                    e.stopPropagation();
-                                    e.preventDefault();
-                                    setFile(null);
-                                }}>Remove</Button>
+
+                        {isCheckingFile ? (
+                            <div className="flex flex-col items-center z-20 py-4 animate-in fade-in">
+                                <Loader2 className="w-8 h-8 text-primary animate-spin mb-2" />
+                                <p className="text-sm font-medium text-foreground">Verifying security...</p>
+                            </div>
+                        ) : file ? (
+                            <div className="flex flex-col items-center z-20 w-full">
+                                {isLocked ? (
+                                    <div className="flex flex-col items-center animate-in zoom-in-95 duration-200">
+                                        <div className="relative mb-3">
+                                            <div className="absolute inset-0 bg-rose-100 rounded-full animate-ping opacity-20"></div>
+                                            <Lock className="w-10 h-10 text-rose-500 relative z-10" />
+                                        </div>
+                                        <p className="text-sm font-medium text-foreground mb-1">{file.name}</p>
+                                        <p className="text-xs text-rose-600 font-semibold mb-4 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-100">
+                                            Password Required
+                                        </p>
+
+                                        <div className="flex gap-2 items-center relative z-30" onClick={e => e.stopPropagation()}>
+                                            <Input
+                                                type="password"
+                                                placeholder="Enter PDF Password"
+                                                className="h-9 text-sm w-40 bg-background shadow-sm border-rose-200 focus-visible:ring-rose-500"
+                                                value={manualPassword}
+                                                onChange={e => setManualPassword(e.target.value)}
+                                                onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleUnlock())}
+                                                autoFocus
+                                            />
+                                            <Button
+                                                type="button"
+                                                size="sm"
+                                                className="h-9 px-4 bg-rose-600 hover:bg-rose-700 text-white shadow-sm"
+                                                onClick={handleUnlock}
+                                            >
+                                                Unlock
+                                            </Button>
+                                        </div>
+                                        {unlockError && <p className="text-xs text-rose-600 font-medium mt-2 bg-rose-50 px-2 py-1 rounded">{unlockError}</p>}
+
+                                        <Button variant="ghost" size="sm" className="mt-4 text-muted-foreground hover:text-foreground z-30 h-8 text-xs" onClick={(e) => {
+                                            e.stopPropagation();
+                                            setFile(null);
+                                            setIsLocked(false);
+                                            setFormData(prev => ({ ...prev, pdfPassword: "" }));
+                                        }}>Change File</Button>
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col items-center animate-in fade-in slide-in-from-bottom-2">
+                                        <div className="relative">
+                                            <FileText className="w-12 h-12 mb-2 text-emerald-500 drop-shadow-sm" />
+                                            {formData.pdfPassword && (
+                                                <div className="absolute -top-1 -right-1 bg-emerald-100 text-emerald-700 rounded-full p-1 border border-white shadow-sm" title="File unlocked">
+                                                    <Unlock className="w-3 h-3" />
+                                                </div>
+                                            )}
+                                        </div>
+                                        <p className="text-sm font-medium text-foreground">{file.name}</p>
+                                        <p className="text-xs text-muted-foreground">{(file.size / 1024).toFixed(0)} KB</p>
+                                        {formData.pdfPassword && (
+                                            <div className="flex items-center gap-1 mt-2 bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-100">
+                                                <Unlock className="w-3 h-3" />
+                                                <span className="text-[10px] font-semibold">Unlocked & Ready</span>
+                                            </div>
+                                        )}
+
+                                        <Button variant="ghost" size="sm" className="mt-2 text-destructive hover:text-destructive z-30 h-7 text-xs" onClick={(e) => {
+                                            e.stopPropagation();
+                                            setFile(null);
+                                            setFormData(prev => ({ ...prev, pdfPassword: "" }));
+                                        }}>Remove</Button>
+                                    </div>
+                                )}
                             </div>
                         ) : (
                             <>
-                                <Upload className="w-10 h-10 mb-2 opacity-50" />
-                                <p className="text-sm font-medium">Click or drag PDF to upload</p>
+                                <div className="bg-muted/30 p-3 rounded-full mb-3">
+                                    <Upload className="w-6 h-6 opacity-50" />
+                                </div>
+                                <p className="text-sm font-medium text-foreground">Click or drag PDF to upload</p>
                                 <p className="text-xs text-muted-foreground mt-1">Supports PDF, PNG, JPG</p>
                             </>
                         )}
 
                         {/* Toolbar Overlay */}
-                        <div className="absolute bottom-2 right-2 flex gap-1 z-30 pointer-events-none">
+                        <div className={cn(
+                            "absolute bottom-2 right-2 flex gap-1 z-30 transition-opacity duration-200",
+                            (isLocked || isCheckingFile) ? "opacity-0 pointer-events-none" : "opacity-100"
+                        )}>
                             <div className="flex gap-1 bg-background/80 backdrop-blur-sm p-1 rounded-md border shadow-sm pointer-events-auto">
                                 <Button
                                     type="button"
@@ -386,20 +544,6 @@ Output ONLY valid JSON in this exact format:
                             </div>
                         </div>
                     </div>
-
-                    {file && file.type === 'application/pdf' && (
-                        <div className="flex items-center gap-2 animate-in fade-in slide-in-from-top-1 mt-2 justify-center">
-                            <Label htmlFor="pdfPass" className="text-xs text-muted-foreground whitespace-nowrap">PDF Password (Optional):</Label>
-                            <Input
-                                id="pdfPass"
-                                type="password"
-                                className="h-8 text-xs w-48 bg-background"
-                                placeholder="Required if PDF is locked"
-                                value={formData.pdfPassword || ''}
-                                onChange={e => setFormData({ ...formData, pdfPassword: e.target.value })}
-                            />
-                        </div>
-                    )}
                 </div>
 
                 <div className="space-y-4">
