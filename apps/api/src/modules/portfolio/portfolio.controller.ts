@@ -82,8 +82,14 @@ export class PortfolioController {
             );
 
             // Aggregate totals
-            const totalRealizedGain = results.reduce((sum, item) => sum + item.realizedGain, 0);
-            const totalCostBasis = results.reduce((sum, item) => sum + item.totalCostBasis, 0);
+            // Aggregate totals using the EUR converted values
+            const totalRealizedGain = results.reduce((sum, item) => sum + (item.realizedGainEur || 0), 0);
+            const totalCostBasis = results.reduce((sum, item) => sum + (item.totalCostBasisEur || 0), 0);
+
+            const nflx = results.find(r => r.symbol === 'NFLX');
+            if (nflx) {
+                console.log('CONTROLLER NFLX:', JSON.stringify(nflx, null, 2));
+            }
 
             return reqRes.json({
                 currency,

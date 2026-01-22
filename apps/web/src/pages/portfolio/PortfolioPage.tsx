@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fetchAPI } from "@/lib/api";
+import { fetchAPI, fetchPrices } from "@/lib/api";
 import type { PortfolioSummary } from "@/components/portfolio/portfolio.types";
 import { PortfolioSummaryCards } from "@/components/portfolio/PortfolioSummaryCards";
 import { PortfolioTable } from "@/components/portfolio/PortfolioTable";
@@ -18,12 +18,28 @@ export default function PortfolioPage() {
     const [error, setError] = useState<string | null>(null);
     const [method, setMethod] = useState<string>("FIFO");
 
+    const [prices, setPrices] = useState<Record<string, { price: number; currency: string }>>({});
+
     useEffect(() => {
         const fetchSummary = async () => {
             setLoading(true);
             try {
-                const data = await fetchAPI<PortfolioSummary>(`/portfolio/summary?method=${method}`);
+                const data = await fetchAPI<PortfolioSummary>(`/portfolio/summary?method=${method}&_t=${Date.now()}`);
                 setSummary(data);
+
+                // Fetch prices
+                const symbols = data.holdings.map(h => h.symbol);
+                if (symbols.length > 0) {
+                    // Add currency pairs to fetch
+                    const symbolsToFetch = [...symbols, "USDEUR=X"];
+                    try {
+                        const pricesData = await fetchPrices(symbolsToFetch);
+                        setPrices(pricesData);
+                    } catch (e) {
+                        console.error("Failed to fetch prices", e);
+                    }
+                }
+
                 setError(null);
             } catch (err) {
                 setError("Failed to load portfolio summary");
@@ -69,7 +85,7 @@ export default function PortfolioPage() {
                                 <CardTitle>Holdings</CardTitle>
                             </CardHeader>
                             <CardContent className="overflow-x-auto">
-                                <PortfolioTable holdings={summary.holdings} />
+                                <PortfolioTable holdings={summary.holdings} prices={prices} />
                             </CardContent>
                         </Card>
                     </>

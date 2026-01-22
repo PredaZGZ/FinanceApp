@@ -3,7 +3,7 @@ import { CalculationResult, StockTrade, TradeMatch } from './portfolio.types';
 export class PortfolioService {
     /**
      * Calculates the cost basis and realized gains using FIFO method.
-     * Assumes trades are for a single symbol.
+     * Assumes trades are for a single symbol and same currency.
      */
     calculateFIFO(trades: StockTrade[]): CalculationResult {
         // Sort trades by date ascending
@@ -57,7 +57,7 @@ export class PortfolioService {
                         quantitySold: quantityFromThisLot,
                         sellPrice: trade.price,
                         buyDate: buyLot.date,
-                        buyPrice: buyLot.price, // Display original price, not adjusted cost basis, for clarity? Or adjusted? Usually original price is better for "Buy Price" field, but gain reflects costs.
+                        buyPrice: buyLot.price,
                         gain: gain
                     });
 
@@ -82,6 +82,7 @@ export class PortfolioService {
 
         return {
             symbol: trades[0]?.symbol || '',
+            currency: trades[0]?.currency || 'EUR',
             realizedGain,
             remainingShares,
             totalCostBasis,
@@ -129,8 +130,8 @@ export class PortfolioService {
                     sellDate: trade.date,
                     quantitySold: trade.quantity,
                     sellPrice: trade.price,
-                    buyDate: trade.date, // For Weighted Average, we don't have a specific buy date. Using sell date or "Various" logic.
-                    buyPrice: averageCost, // The average cost at the time of sale
+                    buyDate: trade.date,
+                    buyPrice: averageCost,
                     gain: gain
                 });
 
@@ -149,6 +150,7 @@ export class PortfolioService {
 
         return {
             symbol: trades[0]?.symbol || '',
+            currency: trades[0]?.currency || 'EUR',
             averageCost,
             totalCostBasis: totalCost,
             remainingShares: totalShares,
@@ -159,7 +161,7 @@ export class PortfolioService {
 
     /**
      * Calculates the summary for the entire portfolio (all symbols).
-     * If exchangeRates are provided, converts all non-targetCurrency trades to targetCurrency.
+     * Returns results in NATIVE currency for display, but includes EUR totals for aggregation.
      */
     calculatePortfolioSummary(
         trades: StockTrade[],
@@ -167,63 +169,80 @@ export class PortfolioService {
         targetCurrency: 'EUR' | 'USD' = 'EUR',
         exchangeRates: { date: Date; rate: number; currency: string }[] = []
     ): CalculationResult[] {
-        // Group trades by symbol
-        const tradesBySymbol: Record<string, StockTrade[]> = {};
+        const results: CalculationResult[] = [];
+        const tradesBySymbol: Record<string, { native: StockTrade[], eur: StockTrade[] }> = {};
 
         for (const trade of trades) {
-            // Convert trade if needed
-            let processedTrade = { ...trade };
+            if (!tradesBySymbol[trade.symbol]) {
+                tradesBySymbol[trade.symbol] = { native: [], eur: [] };
+            }
 
-            // Logic: If trade is USD and target is EUR, we need a rate (EUR/USD or USD/EUR?)
-            // The DB stores "conversionRate" which the script says is EUR/USD (e.g. 0.9 EUR per 1 USD).
-            // Script logic: conversionRate = eurCost / topUp.value (USD). So Rate is EUR per USD.
-            // So USD * Rate = EUR.
+            // 1. Native Trade (Original) - Just push as is
+            tradesBySymbol[trade.symbol].native.push(trade);
 
-            if (trade.currency !== targetCurrency && exchangeRates.length > 0) {
-                // Find applicable rate: Latest rate BEFORE or ON trade date
+            // 2. EUR Trade (Converted)
+            let eurTrade = { ...trade };
+            let converted = false;
+
+            if (trade.currency === 'EUR') {
+                converted = true; // Already EUR
+            } else if (exchangeRates.length > 0) {
+                // Try conversion
                 const tradeDate = new Date(trade.date).getTime();
-                // Rates are sorted ASC
-                let applicableRate = exchangeRates[0]?.rate; // Default to first if no prior
+                let applicableRate = exchangeRates[0]?.rate; // Default to first
 
                 for (const rateObj of exchangeRates) {
                     if (rateObj.date.getTime() <= tradeDate) {
                         applicableRate = rateObj.rate;
                     } else {
-                        break; // Future rate, stop
+                        break;
                     }
                 }
 
                 if (applicableRate) {
-                    // Assuming rate is Target/Source (e.g. EUR/USD)
-                    // If target is EUR and trade is USD, we multiply by rate.
-                    if (targetCurrency === 'EUR' && trade.currency === 'USD') {
-                        processedTrade.price = trade.price * applicableRate;
-                        processedTrade.fees = trade.fees * applicableRate;
-                        processedTrade.commission = trade.commission * applicableRate;
-                        // processedTrade.currency = 'EUR'; // Conceptually
-                    }
-                    // Add other pairs if needed
+                    // Assuming rate is EUR/USD
+                    eurTrade.price = trade.price * applicableRate;
+                    eurTrade.fees = trade.fees * applicableRate;
+                    eurTrade.commission = trade.commission * applicableRate;
+                    eurTrade.currency = 'EUR';
+                    converted = true;
                 }
-            } else if (trade.currency !== targetCurrency && exchangeRates.length === 0) {
-                // No rates available, skip or keep as is? 
-                // For now, if we can't convert, we might exclude or just process as is (mixed currency error).
-                // Let's process as is but it will be mixed values.
             }
 
-            if (!tradesBySymbol[processedTrade.symbol]) {
-                tradesBySymbol[processedTrade.symbol] = [];
-            }
-            tradesBySymbol[processedTrade.symbol].push(processedTrade);
+            // If converted (or already EUR), push to eur list
+            // If not converted, we technically have a "mixed" or "incorrect" EUR list, 
+            // but for aggregation purposes we might just have to accept the raw value (1:1 error) or 0.
+            // Pushing it anyway ensures share counts match.
+            tradesBySymbol[trade.symbol].eur.push(eurTrade);
         }
 
-        const results: CalculationResult[] = [];
         for (const symbol in tradesBySymbol) {
-            const symbolTrades = tradesBySymbol[symbol];
+            const { native, eur } = tradesBySymbol[symbol];
+
+            // Calculate Native (For Display)
+            let nativeResult: CalculationResult;
             if (method === 'WeightedAverage') {
-                results.push(this.calculateWeightedAverage(symbolTrades));
+                nativeResult = this.calculateWeightedAverage(native);
             } else {
-                results.push(this.calculateFIFO(symbolTrades));
+                nativeResult = this.calculateFIFO(native);
             }
+
+            // Calculate EUR (For Totals)
+            let eurResult: CalculationResult;
+            if (method === 'WeightedAverage') {
+                eurResult = this.calculateWeightedAverage(eur);
+            } else {
+                eurResult = this.calculateFIFO(eur);
+            }
+
+            results.push({
+                ...nativeResult,
+                // Ensure currency is set from Native result
+                currency: nativeResult.currency,
+                // Attach EUR totals
+                totalCostBasisEur: eurResult.totalCostBasis,
+                realizedGainEur: eurResult.realizedGain
+            });
         }
 
         return results;

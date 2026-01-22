@@ -41,3 +41,11 @@ export async function postAPI<T>(endpoint: string, body: any, options?: RequestI
     });
 }
 
+export async function fetchPrices(symbols: string[]): Promise<Record<string, { price: number; currency: string }>> {
+    if (!symbols.length) return {};
+    const query = symbols.join(",");
+    return fetchAPI<Record<string, { price: number; currency: string }>>(
+        `/prices/batch?symbols=${encodeURIComponent(query)}`
+    );
+}
+

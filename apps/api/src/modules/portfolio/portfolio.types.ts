@@ -21,9 +21,12 @@ export interface TradeMatch {
 
 export interface CalculationResult {
     symbol: string;
+    currency: string;
     realizedGain: number;     // Total profit/loss from sold shares
     remainingShares: number;  // Shares currently held
     averageCost: number;      // Per share cost basis
     totalCostBasis: number;   // Total value of held shares at cost
+    realizedGainEur?: number; // Converted for aggregation
+    totalCostBasisEur?: number; // Converted for aggregation
     breakdown?: TradeMatch[];  // (FIFO only) Which buy matched which sell
 }
