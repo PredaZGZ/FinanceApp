@@ -35,6 +35,7 @@ export class SalaryController {
 
             const userId = req.user!.id;
             const result = await salaryService.create(userId, parseResult.data, req.file);
+            res.header('Content-Type', 'application/json; charset=utf-8');
             res.status(201).json(result);
         } catch (error) {
             console.error(error);
@@ -50,6 +51,7 @@ export class SalaryController {
             }
             const userId = req.user!.id;
             const result = await salaryService.findAll(userId, parseResult.data);
+            res.header('Content-Type', 'application/json; charset=utf-8');
             res.json(result);
         } catch (error) {
             console.error(error);
@@ -64,6 +66,7 @@ export class SalaryController {
             if (!result) {
                 return res.status(404).json({ error: 'Salary record not found' });
             }
+            res.header('Content-Type', 'application/json; charset=utf-8');
             res.json(result);
         } catch (error) {
             console.error(error);
@@ -114,6 +117,7 @@ export class SalaryController {
                 return res.status(404).json({ error: "Record not found" });
             }
 
+            res.header('Content-Type', 'application/json; charset=utf-8');
             res.json(result);
         } catch (error) {
             console.error(error);
@@ -131,6 +135,7 @@ export class SalaryController {
             const isPdf = req.file.mimetype.toLowerCase().includes('pdf') || req.file.originalname.toLowerCase().endsWith('.pdf');
             if (!isPdf) {
                 console.log('DEBUG: Not a PDF, returning not locked');
+                res.header('Content-Type', 'application/json; charset=utf-8');
                 return res.json({ isLocked: false });
             }
 
@@ -145,6 +150,7 @@ export class SalaryController {
                 });
                 await loadingTask.promise;
                 console.log('DEBUG: Opened without password');
+                res.header('Content-Type', 'application/json; charset=utf-8');
                 return res.json({ isLocked: false });
             } catch (e: any) {
                 if (e.name !== 'PasswordException') {
@@ -172,6 +178,7 @@ export class SalaryController {
                     await loadingTask.promise;
 
                     console.log('DEBUG: Unlocked with saved password');
+                    res.header('Content-Type', 'application/json; charset=utf-8');
                     return res.json({ isLocked: false, password: plain });
                 } catch (e) {
                     // Wrong password
@@ -180,6 +187,7 @@ export class SalaryController {
 
             // 3. Exhausted options, it is locked
             console.log('DEBUG: Exhausted all passwords, returning locked');
+            res.header('Content-Type', 'application/json; charset=utf-8');
             return res.json({ isLocked: true });
 
         } catch (error) {

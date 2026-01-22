@@ -12,6 +12,15 @@ import { FileText, Download, Building2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
+// Helper to fix potential encoding issues (Latin1 treated as UTF-8)
+const fixEncoding = (str: string) => {
+    try {
+        return decodeURIComponent(escape(str));
+    } catch {
+        return str;
+    }
+};
+
 interface SalaryDetailModalProps {
     salaryId: string | null;
     onClose: () => void;
@@ -36,10 +45,10 @@ export default function SalaryDetailModal({ salaryId, onClose }: SalaryDetailMod
 
     return (
         <Dialog open={!!salaryId} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="max-w-md p-0 overflow-hidden gap-0">
+            <DialogContent className="max-w-lg p-0 overflow-hidden gap-0">
                 <div className="bg-primary/5 p-6 border-b">
                     <DialogHeader className="mb-4">
-                        <DialogTitle className="flex justify-between items-center">
+                        <DialogTitle className="flex justify-start items-center gap-3">
                             <span className="text-xl">Payslip Details</span>
                             <Badge variant="outline" className="bg-background">{format(new Date(data.date), "MMM yyyy")}</Badge>
                         </DialogTitle>
@@ -115,7 +124,7 @@ export default function SalaryDetailModal({ salaryId, onClose }: SalaryDetailMod
                             <FileText className="w-4 h-4 text-primary" />
                             <div className="flex flex-col items-start flex-1 text-left">
                                 <span className="text-sm font-medium leading-none">Original Document</span>
-                                <span className="text-[10px] text-muted-foreground">{data.fileName}</span>
+                                <span className="text-[10px] text-muted-foreground">{fixEncoding(data.fileName)}</span>
                             </div>
                             <Download className="w-4 h-4 text-muted-foreground" />
                         </Button>
