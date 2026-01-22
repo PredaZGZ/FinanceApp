@@ -162,7 +162,7 @@ export default function TransactionsPage() {
                                     <TableHeader className="sticky top-0 bg-background z-10">
                                         <TableRow>
                                             <TableHead
-                                                className="w-[120px] cursor-pointer hover:bg-muted/50"
+                                                className="cursor-pointer hover:bg-muted/50 w-[150px]"
                                                 onClick={() => handleSort("date")}
                                             >
                                                 <div className="flex items-center gap-1">
@@ -170,9 +170,9 @@ export default function TransactionsPage() {
                                                     <ArrowUpDown className="h-3 w-3" />
                                                 </div>
                                             </TableHead>
-                                            <TableHead className="w-[80px]">Time</TableHead>
+                                            <TableHead className="w-[100px]">Time</TableHead>
                                             <TableHead
-                                                className="w-[100px] cursor-pointer hover:bg-muted/50"
+                                                className="cursor-pointer hover:bg-muted/50 min-w-[200px]"
                                                 onClick={() => handleSort("symbol")}
                                             >
                                                 <div className="flex items-center gap-1">
@@ -181,7 +181,7 @@ export default function TransactionsPage() {
                                                 </div>
                                             </TableHead>
                                             <TableHead
-                                                className="w-[150px] cursor-pointer hover:bg-muted/50"
+                                                className="cursor-pointer hover:bg-muted/50"
                                                 onClick={() => handleSort("type")}
                                             >
                                                 <div className="flex items-center gap-1">
@@ -190,7 +190,7 @@ export default function TransactionsPage() {
                                                 </div>
                                             </TableHead>
                                             <TableHead
-                                                className="w-[80px] cursor-pointer hover:bg-muted/50"
+                                                className="w-[100px] cursor-pointer hover:bg-muted/50"
                                                 onClick={() => handleSort("side")}
                                             >
                                                 <div className="flex items-center gap-1">
@@ -199,7 +199,7 @@ export default function TransactionsPage() {
                                                 </div>
                                             </TableHead>
                                             <TableHead
-                                                className="w-[100px] text-right cursor-pointer hover:bg-muted/50"
+                                                className="text-right cursor-pointer hover:bg-muted/50"
                                                 onClick={() => handleSort("quantity")}
                                             >
                                                 <div className="flex items-center justify-end gap-1">
@@ -208,7 +208,7 @@ export default function TransactionsPage() {
                                                 </div>
                                             </TableHead>
                                             <TableHead
-                                                className="w-[120px] text-right cursor-pointer hover:bg-muted/50"
+                                                className="text-right cursor-pointer hover:bg-muted/50"
                                                 onClick={() => handleSort("price")}
                                             >
                                                 <div className="flex items-center justify-end gap-1">
@@ -217,7 +217,7 @@ export default function TransactionsPage() {
                                                 </div>
                                             </TableHead>
                                             <TableHead
-                                                className="w-[120px] text-right cursor-pointer hover:bg-muted/50"
+                                                className="text-right cursor-pointer hover:bg-muted/50"
                                                 onClick={() => handleSort("value")}
                                             >
                                                 <div className="flex items-center justify-end gap-1">
@@ -226,7 +226,7 @@ export default function TransactionsPage() {
                                                 </div>
                                             </TableHead>
                                             <TableHead
-                                                className="w-[100px] text-right cursor-pointer hover:bg-muted/50"
+                                                className="text-right cursor-pointer hover:bg-muted/50"
                                                 onClick={() => handleSort("fees")}
                                             >
                                                 <div className="flex items-center justify-end gap-1">

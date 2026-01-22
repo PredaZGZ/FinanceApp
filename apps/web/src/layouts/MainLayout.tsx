@@ -134,7 +134,7 @@ export default function MainLayout() {
         </header>
 
         <div className="flex-1 flex flex-col overflow-y-auto">
-          <div className="max-w-6xl mx-auto w-full h-full">
+          <div className="max-w-[1600px] mx-auto w-full h-full">
             <Outlet />
           </div>
         </div>
