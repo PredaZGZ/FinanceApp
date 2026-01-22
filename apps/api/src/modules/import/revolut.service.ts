@@ -181,7 +181,7 @@ export class RevolutService {
     private parsePortfolio(text: string, currency: 'EUR' | 'USD'): PortfolioItem[] {
         const portfolio: PortfolioItem[] = [];
         const cleanText = text.replace(/\s+/g, ' ');
-        const pattern = new RegExp(`${currency} Portfolio breakdown.*?SymbolCompanyISINQuantityPriceValue% of Portfolio(.*?)(?:${currency} Transactions|Get help)`, 'i');
+        const pattern = new RegExp(`${currency} Portfolio breakdown.*?Symbol.*?Company.*?ISIN.*?Quantity.*?Price.*?Value.*?% of Portfolio(.*?)(?:${currency} Transactions|Get help)`, 'i');
         const match = cleanText.match(pattern);
 
         if (!match) return portfolio;
@@ -231,7 +231,7 @@ export class RevolutService {
         // Capture until the next "Account summary" (start of next currency block) or End of String.
         // We use [\s\S]*? to capture across newlines (though we cleaned them, just in case).
         // We look for "Account summary" as a delimiter because that's how sections start.
-        const pattern = new RegExp(`${currency} Transactions.*?DateSymbolTypeQuantityPriceSideValueFeesCommission([\\s\\S]*?)(?:(?:EUR|USD) Account summary|$)`, 'i');
+        const pattern = new RegExp(`${currency} Transactions.*?Date.*?Symbol.*?Type.*?Quantity.*?Price.*?Side.*?Value.*?Fees.*?Commission([\\s\\S]*?)(?:(?:EUR|USD) Account summary|$)`, 'i');
         const match = cleanText.match(pattern);
 
         if (!match) return { stockTrades, cashTransfers };
