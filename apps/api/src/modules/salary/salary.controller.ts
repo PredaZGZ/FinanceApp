@@ -123,11 +123,14 @@ export class SalaryController {
 
     async validateFile(req: any, res: Response) {
         let filePath = req.file?.path;
+        console.log(`DEBUG: validateFile called for ${req.file?.originalname}`);
         try {
             if (!req.file) return res.status(400).json({ error: "No file provided" });
 
             // Images usually don't have pdf-like encryption
-            if (!req.file.mimetype.includes('pdf')) {
+            const isPdf = req.file.mimetype.toLowerCase().includes('pdf') || req.file.originalname.toLowerCase().endsWith('.pdf');
+            if (!isPdf) {
+                console.log('DEBUG: Not a PDF, returning not locked');
                 return res.json({ isLocked: false });
             }
 
@@ -135,25 +138,31 @@ export class SalaryController {
 
             // 1. Try opening without password
             try {
+                // Suppress standard font warning if possible, but logging is fine
                 const loadingTask = pdfjsLib.getDocument({
                     data: new Uint8Array(buffer),
                     standardFontDataUrl,
                 });
                 await loadingTask.promise;
+                console.log('DEBUG: Opened without password');
                 return res.json({ isLocked: false });
             } catch (e: any) {
                 if (e.name !== 'PasswordException') {
                     // unexpected error, but likely just encrypted
+                    console.log(`DEBUG: Error opening without password (not PasswordException): ${e.name}`);
                 }
             }
 
             // 2. Try saved passwords
             const userId = req.user!.id;
+            console.log(`DEBUG: User ID for password lookup: ${userId}`);
             const savedPasswords = await salaryPasswordService.findAllWithSecrets(userId);
+            console.log(`DEBUG: Found ${savedPasswords.length} saved passwords for user`);
 
             for (const sp of savedPasswords) {
                 try {
                     const plain = decrypt(sp.encryptedPassword, sp.iv);
+                    // console.log(`DEBUG: Trying saved password: ${plain}`); // careful logging real passwords
 
                     const loadingTask = pdfjsLib.getDocument({
                         data: new Uint8Array(buffer),
@@ -162,6 +171,7 @@ export class SalaryController {
                     });
                     await loadingTask.promise;
 
+                    console.log('DEBUG: Unlocked with saved password');
                     return res.json({ isLocked: false, password: plain });
                 } catch (e) {
                     // Wrong password
@@ -169,6 +179,7 @@ export class SalaryController {
             }
 
             // 3. Exhausted options, it is locked
+            console.log('DEBUG: Exhausted all passwords, returning locked');
             return res.json({ isLocked: true });
 
         } catch (error) {

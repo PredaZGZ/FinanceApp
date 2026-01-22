@@ -12,6 +12,7 @@ export const createSalaryRecordSchema = z.object({
     netSalary: z.number().optional(),
     company: z.string().optional(),
     notes: z.string().optional(),
+    pdfPassword: z.string().optional(),
     breakdown: z.array(breakdownItemSchema).optional(),
 });
 

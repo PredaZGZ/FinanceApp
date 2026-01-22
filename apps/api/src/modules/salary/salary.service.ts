@@ -1,8 +1,87 @@
 import pool from '../../common/db/client';
 import type { CreateSalaryRecordInput, GetSalaryRecordsQuery } from './salary.schema';
+import fs from 'fs';
+import { util } from 'zod'; // Just to have util available? No, import standard util
+import * as utilModule from 'util';
+import { execFile } from 'child_process';
+import { salaryPasswordService } from '../salary-password/salary-password.service';
+import { decrypt } from '../../common/utils/encryption';
+
+const execFilePromise = utilModule.promisify(execFile);
 
 export class SalaryService {
+    private async handleEncryptedFile(file: Express.Multer.File, password: string, userId: string) {
+        console.log(`DEBUG: handleEncryptedFile called for ${file.originalname}, mime=${file.mimetype}`);
+        console.log(`DEBUG: handleEncryptedFile userId=${userId}, password provided: ${!!password}`);
+
+        const isPdf = file.mimetype.toLowerCase().includes('pdf') || file.originalname.toLowerCase().endsWith('.pdf');
+        if (!isPdf) {
+            console.log('DEBUG: Not a PDF, skipping decryption');
+            return;
+        }
+
+        try {
+            console.log('DEBUG: Attempting decryption with qpdf');
+            const tempOut = file.path + '.decrypted.pdf';
+
+            // qpdf --password=PASSWORD --decrypt input output
+            // Using --replace-input might be easier but let's stick to explicit input/output for safety
+
+            try {
+                // Command: qpdf --password=PASS --decrypt input output
+                await execFilePromise('qpdf', [`--password=${password}`, '--decrypt', file.path, tempOut]);
+                console.log('DEBUG: qpdf decryption successful');
+
+                // Replace original file
+                try {
+                    if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+                } catch (e) { console.warn("Unlink error", e); }
+
+                fs.renameSync(tempOut, file.path);
+                console.log('DEBUG: Replaced original file with decrypted version');
+
+                // Valid password, check if we need to save it
+                // Save password if new
+                const saved = await salaryPasswordService.findAllWithSecrets(userId);
+
+                const exists = saved.some(s => {
+                    try {
+                        return decrypt(s.encryptedPassword, s.iv) === password;
+                    } catch { return false; }
+                });
+
+                console.log(`DEBUG: Checking if password exists: ${exists}`);
+
+                if (!exists) {
+                    console.log('DEBUG: Saving new password');
+                    const newPass = await salaryPasswordService.create(userId, {
+                        passphrase: password,
+                        label: file.originalname || 'Auto-saved'
+                    });
+                    console.log(`DEBUG: Password saved with ID: ${newPass.id}`);
+                }
+
+            } catch (err: any) {
+                console.error('DEBUG: qpdf failed:', err.stderr || err.message);
+                // If qpdf fails (wrong password), we just leave the file encrypted (locked)
+                // Clean up temp output if it exists (unlikely on fail)
+                if (fs.existsSync(tempOut)) fs.unlinkSync(tempOut);
+            }
+
+        } catch (e) {
+            console.error("DEBUG: General error in handleEncryptedFile:", e);
+        }
+    }
+
     async create(userId: string, data: CreateSalaryRecordInput, file?: Express.Multer.File) {
+        console.log(`DEBUG: SalaryService.create called. userId=${userId}, hasFile=${!!file}, hasPdfPassword=${!!data.pdfPassword}`);
+        if (file && data.pdfPassword) {
+            console.log('DEBUG: Delegating to handleEncryptedFile');
+            await this.handleEncryptedFile(file, data.pdfPassword, userId);
+        } else {
+            console.log('DEBUG: Skipping handleEncryptedFile (missing file or password)');
+        }
+
         const client = await pool.connect();
         try {
             await client.query('BEGIN');
@@ -101,6 +180,10 @@ export class SalaryService {
     }
 
     async update(userId: string, id: string, data: CreateSalaryRecordInput, file?: Express.Multer.File) {
+        if (file && data.pdfPassword) {
+            await this.handleEncryptedFile(file, data.pdfPassword, userId);
+        }
+
         const client = await pool.connect();
         try {
             await client.query('BEGIN');

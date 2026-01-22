@@ -3,10 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, Upload, CalendarIcon, Building, Euro, FileText, Sparkles, Image, ClipboardPaste, Copy, Lock, Unlock, Loader2 } from "lucide-react";
+import { Plus, Trash2, Upload, CalendarIcon, Building, Euro, FileText, Sparkles, Image, ClipboardPaste, Copy, Lock, Unlock, Loader2, Check } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist';
-
+import { convertPdfToImage } from "@/lib/pdfUtils";
 // Configure PDF worker
 import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 GlobalWorkerOptions.workerSrc = pdfWorker;
@@ -194,7 +194,7 @@ Output ONLY valid JSON in this exact format:
     };
 
     const [isConverting, setIsConverting] = useState(false);
-    const [previewInfo, setPreviewInfo] = useState<{ blob: Blob, url: string } | null>(null);
+    const [imageCopied, setImageCopied] = useState(false);
 
     const handleJpgAction = async (e: React.MouseEvent) => {
         e.preventDefault();
@@ -203,40 +203,35 @@ Output ONLY valid JSON in this exact format:
 
         try {
             setIsConverting(true);
-            let blob: Blob | null = null;
 
-            if (file.type === 'application/pdf') {
-                const { convertPdfToImage } = await import("@/lib/pdfUtils");
-                blob = await convertPdfToImage(file, formData.pdfPassword);
-            } else if (file.type.startsWith('image/')) {
-                blob = file;
-            }
+            const mimeType = file.type === 'application/pdf' ? 'image/png' : file.type;
 
-            if (blob) {
-                const url = URL.createObjectURL(blob);
-                setPreviewInfo({ blob, url });
-            } else {
-                throw new Error("Could not process file to image");
-            }
+            const blobPromise = new Promise<Blob>(async (resolve, reject) => {
+                try {
+                    let b: Blob | null = null;
+                    if (file.type === 'application/pdf') {
+                        b = await convertPdfToImage(file, formData.pdfPassword);
+                    } else {
+                        b = file;
+                    }
+                    if (b) resolve(b);
+                    else reject(new Error("Image generation failed"));
+                } catch (err) {
+                    reject(err);
+                }
+            });
+
+            const item = new ClipboardItem({ [mimeType]: blobPromise });
+            await navigator.clipboard.write([item]);
+
+            setImageCopied(true);
+            setTimeout(() => setImageCopied(false), 2000);
 
         } catch (err: any) {
             console.error(err);
-            setError("Failed to convert image: " + err.message);
+            setError("Failed to copy: " + (err.message || "Unknown error"));
         } finally {
             setIsConverting(false);
-        }
-    };
-
-    const handleCopyPreview = async () => {
-        if (!previewInfo) return;
-        try {
-            const item = new ClipboardItem({ [previewInfo.blob.type]: previewInfo.blob });
-            await navigator.clipboard.write([item]);
-            alert("Image copied to clipboard!");
-            setPreviewInfo(null); // Close after copy
-        } catch (err: any) {
-            console.error(err);
-            setError("Failed to copy from preview: " + err.message);
         }
     };
 
@@ -528,7 +523,13 @@ Output ONLY valid JSON in this exact format:
                                     disabled={!file || isConverting}
                                     title="Copy File as Image (JPG)"
                                 >
-                                    {isConverting ? <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-primary"></div> : <Image className="w-4 h-4 text-blue-600" />}
+                                    {isConverting ? (
+                                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-primary"></div>
+                                    ) : imageCopied ? (
+                                        <Check className="w-4 h-4 text-emerald-500 animate-in zoom-in" />
+                                    ) : (
+                                        <Image className="w-4 h-4 text-blue-600" />
+                                    )}
                                 </Button>
 
                                 <Button
@@ -632,27 +633,7 @@ Output ONLY valid JSON in this exact format:
                 </div>
             </form>
 
-            <Dialog open={!!previewInfo} onOpenChange={(open) => !open && setPreviewInfo(null)}>
-                <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-                    <DialogHeader>
-                        <DialogTitle>Converted Image Preview</DialogTitle>
-                    </DialogHeader>
 
-                    <div className="flex-1 overflow-auto bg-muted/20 p-4 rounded-md flex items-center justify-center">
-                        {previewInfo && (
-                            <img src={previewInfo.url} alt="PDF Preview" className="max-w-full shadow-lg border" />
-                        )}
-                    </div>
-
-                    <DialogFooter className="gap-2 sm:justify-between">
-                        <Button variant="ghost" onClick={() => setPreviewInfo(null)}>Close</Button>
-                        <Button onClick={handleCopyPreview} className="bg-indigo-600 hover:bg-indigo-700">
-                            <Copy className="w-4 h-4 mr-2" />
-                            Copy Image to Clipboard
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
 
             <Dialog open={showManualPaste} onOpenChange={setShowManualPaste}>
                 <DialogContent className="sm:max-w-md">

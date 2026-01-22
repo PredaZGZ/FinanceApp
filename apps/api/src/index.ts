@@ -1,58 +1,24 @@
 import express from "express";
-
+import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import cookieParser from "cookie-parser";
 import loadEnv from "./common/utils/envLoader";
 import mainRouter from "./modules/mainRouter";
-import { errorHandler } from "./common/middleware/errorHandler";
-import { requestLogger } from "./common/middleware/requestLogger";
 
 loadEnv();
 const app = express();
-app.disable('etag'); // Disable 304 responses to force fresh headers
 
-process.on('uncaughtException', (err) => {
-    console.error('UNCAUGHT EXCEPTION:', err);
-});
-
-process.on('unhandledRejection', (reason, promise) => {
-    console.error('UNHANDLED REJECTION:', reason);
-});
-
-// Middleware
-app.use(requestLogger);
-
-// Manual CORS Handling
-app.use((req, res, next) => {
-    const origin = req.headers.origin;
-
-    // Explicitly allow localhost:5173 and others
-    if (origin) {
-        res.setHeader('Access-Control-Allow-Origin', origin);
-        res.setHeader('Access-Control-Allow-Credentials', 'true');
-        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Range');
-        res.setHeader('Vary', 'Origin');
-    }
-
-    // Handle Preflight
-    if (req.method === 'OPTIONS') {
-        return res.sendStatus(200);
-    }
-
-    next();
-});
-
+// Security Middleware
+app.use(helmet());
 app.use(cookieParser());
 
 // Rate Limiting
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 1000, // Limit each IP to 1000 requests per windowMs
+    max: 100, // Limit each IP to 100 requests per windowMs
     standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
     legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-    skip: (req) => req.method === 'OPTIONS', // Skip preflight requests
     message: "Too many requests from this IP, please try again after 15 minutes"
 });
 app.use(limiter);
@@ -60,13 +26,41 @@ app.use(limiter);
 // Stricter Rate Limiting for Auth
 const authLimiter = rateLimit({
     windowMs: 30 * 60 * 1000, // 30 minutes
-    max: 100, // Limit each IP to 100 requests per windowMs
-    skip: (req) => req.method === 'OPTIONS', // Skip preflight requests
+    max: 25, // Limit each IP to 25 requests per windowMs
     message: "Too many login attempts from this IP, please try again after 30 minutes"
 });
 app.use("/auth", authLimiter);
 
+// Middleware
+import { errorHandler } from "./common/middleware/errorHandler";
+import { requestLogger } from "./common/middleware/requestLogger";
+
+// CORS Configuration
+const allowedOrigins = [
+    process.env.FRONTEND_URL || 'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    'http://localhost:5173'
+];
+app.use(cors({
+    origin: (origin, callback) => {
+        // allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+
+        // Dynamic check for localhost/127.0.0.1 to avoid port mismatch issues during dev
+        const isLocal = origin.match(/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/);
+        const isAllowed = allowedOrigins.includes(origin) || isLocal;
+
+        if (!isAllowed) {
+            var msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+            return callback(new Error(msg), false);
+        }
+        return callback(null, true);
+    },
+    credentials: true // Allow cookies
+}));
+
 app.use(express.json());
+app.use(requestLogger);
 
 // Routes
 app.get("/health", (_req, res) => res.json({ ok: true }));
