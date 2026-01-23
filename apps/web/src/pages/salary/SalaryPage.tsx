@@ -15,7 +15,6 @@ import {
 import { fetchAPI } from "@/lib/api";
 
 export default function SalaryPage() {
-    console.log("SalaryPage mounted");
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [refreshTrigger, setRefreshTrigger] = useState(0);
     const [viewingId, setViewingId] = useState<string | null>(null);

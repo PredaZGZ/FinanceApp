@@ -77,7 +77,7 @@ export default function PortfolioPage() {
                 summary && (
                     <>
                         <div className={loading ? "opacity-50 pointer-events-none transition-opacity" : "transition-opacity"}>
-                            <PortfolioSummaryCards summary={summary} />
+                            <PortfolioSummaryCards summary={summary} prices={prices} />
                         </div>
 
                         <Card className={loading ? "opacity-50 pointer-events-none transition-opacity" : "transition-opacity"}>
