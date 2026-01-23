@@ -36,8 +36,12 @@ export class ImportController {
             );
 
             res.json({ message: 'MyInvestor data imported successfully', data });
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error importing MyInvestor data:', error);
+            // Check for known user errors (validation)
+            if (error.message && (error.message.includes('file inputs') || error.message.includes('Invalid currency'))) {
+                return res.status(400).json({ error: error.message });
+            }
             res.status(500).json({ error: 'Failed to import MyInvestor data' });
         }
     }

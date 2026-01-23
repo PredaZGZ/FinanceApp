@@ -61,6 +61,14 @@ export class MyInvestorService {
                     currency: parts[4].trim()
                 };
 
+                // Validation: Check for swapped files
+                if (movement.currency === 'Finalizada' || movement.currency === 'Pendiente' || movement.currency === 'Anulada' || movement.currency === 'Rechazada') {
+                    throw new Error('It looks like you uploaded the "Orders" file in the "Movements" field. Please check your file inputs.');
+                }
+                if (movement.currency.length > 3) {
+                    throw new Error(`Invalid currency "${movement.currency}" detected in row. Please ensure you uploaded the correct "Movimientos" file.`);
+                }
+
                 const fundKeywords = ['MSCI', 'EMERGING', 'INDEX', 'FONDO', 'VANGUARD', 'FIDELITY', 'ISHARES', 'AMUNDI'];
                 const isFundKeyword = fundKeywords.some(k => movement.concepto.toUpperCase().includes(k));
                 const hasAtSymbol = movement.concepto.includes('@');
