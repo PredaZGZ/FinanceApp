@@ -8,7 +8,7 @@ interface PortfolioSummaryCardsProps {
 }
 
 export function PortfolioSummaryCards({ summary, prices }: PortfolioSummaryCardsProps) {
-    const { totalRealizedGain, totalCostBasis, holdings } = summary;
+    const { totalRealizedGain, holdings } = summary;
     const activeHoldingsCount = holdings.filter(h => h.remainingShares > 0).length;
 
     // Calculate Unrealized metrics
@@ -16,14 +16,12 @@ export function PortfolioSummaryCards({ summary, prices }: PortfolioSummaryCards
     let totalMarketValue = 0;
     let totalCalculatedCostBasis = 0;
 
-    console.log('--- Subtotals Calculation Start ---');
-    holdings.forEach((holding, index) => {
+    holdings.forEach((holding) => {
         if (holding.remainingShares <= 0) return;
 
         // --- Market Value Calculation ---
         const quote = prices?.[holding.symbol];
         let marketValueEUR = 0;
-        let marketConvNote = 'None';
 
         if (quote) {
             let priceVal = quote.price;
@@ -31,33 +29,21 @@ export function PortfolioSummaryCards({ summary, prices }: PortfolioSummaryCards
             // Normalize Quote to EUR
             if (quote.currency === 'USD') {
                 priceVal = quote.price * usdEurRate;
-                marketConvNote = `USD->EUR (Rate: ${usdEurRate})`;
             }
             marketValueEUR = priceVal * holding.remainingShares;
             totalMarketValue += marketValueEUR;
-        } else {
-            console.log(`-${index + 1} [${holding.symbol}] No quote found. Market Value: 0`);
         }
 
         // --- Cost Basis Calculation ---
         // Calculate cost in EUR
         let costNative = holding.averageCost * holding.remainingShares;
         let costEUR = costNative;
-        let costConvNote = 'None';
 
         if (holding.currency === 'USD') {
             costEUR = costNative * usdEurRate;
-            costConvNote = `USD->EUR (Rate: ${usdEurRate})`;
         }
         totalCalculatedCostBasis += costEUR;
-
-        console.log(`+${index + 1} [${holding.symbol}] Shares: ${holding.remainingShares} 
-    | Price: ${quote?.price} ${quote?.currency} -> Val (EUR): ${marketValueEUR.toFixed(2)} (${marketConvNote})
-    | Cost: ${holding.averageCost} ${holding.currency} -> Cost (EUR): ${costEUR.toFixed(2)} (${costConvNote})
-    | RunTotal Val: ${totalMarketValue.toFixed(2)} | RunTotal Cost: ${totalCalculatedCostBasis.toFixed(2)}`);
     });
-    console.log(`--- End. Final Val: ${totalMarketValue.toFixed(2)} | Final Cost: ${totalCalculatedCostBasis.toFixed(2)} ---`);
-
     const totalUnrealizedGain = totalMarketValue - totalCalculatedCostBasis;
 
 
@@ -121,6 +107,11 @@ export function PortfolioSummaryCards({ summary, prices }: PortfolioSummaryCards
                 <CardContent>
                     <div className={`text-2xl font-bold ${totalUnrealizedGain >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                         {totalUnrealizedGain >= 0 ? '+' : ''}€{totalUnrealizedGain.toFixed(2)}
+                        <span className="text-sm ml-2 font-normal opacity-80">
+                            {totalCalculatedCostBasis > 0
+                                ? `(${totalUnrealizedGain >= 0 ? '+' : ''}${((totalUnrealizedGain / totalCalculatedCostBasis) * 100).toFixed(2)}%)`
+                                : ''}
+                        </span>
                     </div>
                     <p className="text-xs text-muted-foreground">
                         Total Market Value: €{totalMarketValue.toFixed(2)}

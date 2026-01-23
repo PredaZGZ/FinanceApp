@@ -18,7 +18,10 @@ export class AuthController {
             });
 
             res.json({ user });
-        } catch (error) {
+        } catch (error: any) {
+            if (error.message === 'User already exists') {
+                return res.status(409).json({ error: 'User already exists' });
+            }
             next(error);
         }
     }
@@ -38,7 +41,10 @@ export class AuthController {
             });
 
             res.json({ user });
-        } catch (error) {
+        } catch (error: any) {
+            if (error.message === 'Invalid credentials') {
+                return res.status(401).json({ error: 'Invalid email or password' });
+            }
             next(error);
         }
     }

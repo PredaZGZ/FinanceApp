@@ -97,7 +97,15 @@ export function PortfolioTable({ holdings, prices }: PortfolioTableProps) {
                                     {holding.realizedGain !== 0 ? `${holding.realizedGain > 0 ? '+' : ''}${currencySymbol}${holding.realizedGain.toFixed(2)}` : '-'}
                                 </TableCell>
                                 <TableCell className={`text-right ${unrealizedGain >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                                    {marketValue > 0 ? `${unrealizedGain > 0 ? '+' : ''}${currencySymbol}${unrealizedGain.toFixed(2)}` : '-'}
+                                    {marketValue > 0 ? (
+                                        <>
+                                            {unrealizedGain > 0 ? '+' : ''}{currencySymbol}{unrealizedGain.toFixed(2)}
+                                            <br />
+                                            <span className="text-xs opacity-80">
+                                                ({unrealizedGain > 0 ? '+' : ''}{((unrealizedGain / holding.totalCostBasis) * 100).toFixed(2)}%)
+                                            </span>
+                                        </>
+                                    ) : '-'}
                                 </TableCell>
                             </TableRow>
                         );
