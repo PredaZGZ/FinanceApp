@@ -8,6 +8,7 @@ import mainRouter from "./modules/mainRouter";
 
 loadEnv();
 const app = express();
+app.set('etag', false); // Disable ETags to force 200 OK and preserve CORS headers
 
 // Security Middleware
 app.use(helmet());
@@ -35,29 +36,20 @@ app.use("/auth", authLimiter);
 import { errorHandler } from "./common/middleware/errorHandler";
 import { requestLogger } from "./common/middleware/requestLogger";
 
-// CORS Configuration
-const allowedOrigins = [
-    process.env.FRONTEND_URL || 'http://localhost:5173',
-    'http://127.0.0.1:5173',
-    'http://localhost:5173'
-];
 app.use(cors({
-    origin: (origin, callback) => {
-        // allow requests with no origin (like mobile apps or curl requests)
-        if (!origin) return callback(null, true);
-
-        // Dynamic check for localhost/127.0.0.1 to avoid port mismatch issues during dev
-        const isLocal = origin.match(/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/);
-        const isAllowed = allowedOrigins.includes(origin) || isLocal;
-
-        if (!isAllowed) {
-            var msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-            return callback(new Error(msg), false);
-        }
-        return callback(null, true);
-    },
-    credentials: true // Allow cookies
+    origin: [
+        'http://localhost:5173',
+        'http://127.0.0.1:5173',
+        'http://localhost:3000',
+        'http://127.0.0.1:3000',
+        'http://localhost:4000',
+        'tauri://localhost',
+        'https://tauri.localhost'
+    ],
+    credentials: true,
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
 }));
+
 
 app.use(express.json());
 app.use(requestLogger);

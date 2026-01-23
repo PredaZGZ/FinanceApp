@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, Upload, CalendarIcon, Building, Euro, FileText, Sparkles, Image, ClipboardPaste, Copy, Lock, Unlock, Loader2, Check } from "lucide-react";
+import { Plus, Trash2, Upload, CalendarIcon, Building, Euro, FileText, Sparkles, Image, ClipboardPaste, Lock, LockOpen, Loader2, Check } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist';
 import { convertPdfToImage } from "@/lib/pdfUtils";
@@ -466,7 +466,7 @@ Output ONLY valid JSON in this exact format:
                                             <FileText className="w-12 h-12 mb-2 text-emerald-500 drop-shadow-sm" />
                                             {formData.pdfPassword && (
                                                 <div className="absolute -top-1 -right-1 bg-emerald-100 text-emerald-700 rounded-full p-1 border border-white shadow-sm" title="File unlocked">
-                                                    <Unlock className="w-3 h-3" />
+                                                    <LockOpen className="w-3 h-3" />
                                                 </div>
                                             )}
                                         </div>
@@ -474,7 +474,7 @@ Output ONLY valid JSON in this exact format:
                                         <p className="text-xs text-muted-foreground">{(file.size / 1024).toFixed(0)} KB</p>
                                         {formData.pdfPassword && (
                                             <div className="flex items-center gap-1 mt-2 bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-100">
-                                                <Unlock className="w-3 h-3" />
+                                                <LockOpen className="w-3 h-3" />
                                                 <span className="text-[10px] font-semibold">Unlocked & Ready</span>
                                             </div>
                                         )}
