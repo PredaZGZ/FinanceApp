@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { fetchAPI, fetchPrices } from "@/lib/api";
 import type { PortfolioSummary } from "@/components/portfolio/portfolio.types";
-import { PortfolioSummaryCards } from "@/components/portfolio/PortfolioSummaryCards";
+import { PortfolioSummaryCards, PortfolioSummarySkeleton } from "@/components/portfolio/PortfolioSummaryCards";
 import { PortfolioTable } from "@/components/portfolio/PortfolioTable";
+import { TableSkeleton } from "@/components/common/TableSkeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
     Select,
@@ -69,18 +70,28 @@ export default function PortfolioPage() {
                 </div>
             </div>
 
-            {(loading && !summary) ? (
-                <div className="p-8">Loading portfolio...</div>
+            {loading && !summary ? (
+                <div className="space-y-6">
+                    <PortfolioSummarySkeleton />
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Holdings</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <TableSkeleton columns={8} rows={5} />
+                        </CardContent>
+                    </Card>
+                </div>
             ) : error ? (
                 <div className="p-8 text-red-500">{error}</div>
             ) : (
                 summary && (
                     <>
-                        <div className={loading ? "opacity-50 pointer-events-none transition-opacity" : "transition-opacity"}>
+                        <div className="transition-opacity">
                             <PortfolioSummaryCards summary={summary} prices={prices} />
                         </div>
 
-                        <Card className={loading ? "opacity-50 pointer-events-none transition-opacity" : "transition-opacity"}>
+                        <Card className="transition-opacity">
                             <CardHeader>
                                 <CardTitle>Holdings</CardTitle>
                             </CardHeader>

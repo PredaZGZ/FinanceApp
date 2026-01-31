@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, ArrowUpDown } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import PendingConversions from "@/components/transactions/PendingConversions";
+import { TableSkeleton } from "@/components/common/TableSkeleton";
 
 interface Transaction {
     id: string;
@@ -152,7 +153,7 @@ export default function TransactionsPage() {
             {activeTab === "list" ? (
                 <>
                     {loading && !data.length ? (
-                        <div className="p-8 text-center">Loading transactions...</div>
+                        <TableSkeleton columns={9} rows={limit || 10} />
                     ) : error ? (
                         <div className="p-8 text-center text-red-500">{error}</div>
                     ) : (

@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import type { Asset } from "./net-worth.types";
 import { Edit2, TrendingUp, Trash2 } from "lucide-react";
+import { TableSkeleton } from "@/components/common/TableSkeleton";
 
 interface AssetsTableProps {
     assets: Asset[];
@@ -21,7 +22,7 @@ interface AssetsTableProps {
 
 export function AssetsTable({ assets, isLoading, onEdit, onDelete, onRevalue }: AssetsTableProps) {
     if (isLoading) {
-        return <div>Loading assets...</div>;
+        return <TableSkeleton columns={6} rows={5} />;
     }
 
     const formatCurrency = (value: number, currency: string) => {

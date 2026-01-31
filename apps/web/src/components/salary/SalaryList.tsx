@@ -14,6 +14,8 @@ import type { SalaryRecord, SalaryListResponse } from "./salary.types";
 import { fetchAPI } from "@/lib/api";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { TableSkeleton } from "@/components/common/TableSkeleton";
 
 interface SalaryListProps {
     refreshTrigger: number;
@@ -57,7 +59,24 @@ export default function SalaryList({ refreshTrigger, onView, onEdit }: SalaryLis
     const averageNet = salaries.length > 0 ? totalNet / salaries.length : 0;
     const lastMonth = salaries.length > 0 ? salaries[0].netSalary : 0; // Assuming sorted by date DESC
 
-    if (loading) return <div className="p-8 text-center text-muted-foreground animate-pulse">Loading salaries...</div>;
+    if (loading) {
+        return (
+            <div className="space-y-6">
+                <SalaryStatsSkeleton />
+                <Card>
+                    <CardHeader>
+                        <CardTitle>History</CardTitle>
+                        <CardDescription>
+                            A list of all your uploaded payrolls and invoices.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                        <TableSkeleton columns={6} rows={5} withHeader={true} />
+                    </CardContent>
+                </Card>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
@@ -178,6 +197,25 @@ export default function SalaryList({ refreshTrigger, onView, onEdit }: SalaryLis
                     </Table>
                 </CardContent>
             </Card>
+        </div>
+    );
+}
+
+function SalaryStatsSkeleton() {
+    return (
+        <div className="grid gap-4 md:grid-cols-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+                <Card key={i}>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <Skeleton className="h-4 w-[100px]" />
+                        <Skeleton className="h-4 w-4 rounded-full" />
+                    </CardHeader>
+                    <CardContent>
+                        <Skeleton className="h-8 w-[120px] mb-1" />
+                        <Skeleton className="h-3 w-[80px]" />
+                    </CardContent>
+                </Card>
+            ))}
         </div>
     );
 }

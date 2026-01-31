@@ -1,5 +1,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { NetWorthSummary } from "./net-worth.types";
 
 interface NetWorthSummaryCardProps {
@@ -12,12 +13,12 @@ export function NetWorthSummaryCard({ summary, isLoading }: NetWorthSummaryCardP
         return (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 {[1, 2, 3, 4].map((i) => (
-                    <Card key={i} className="animate-pulse">
+                    <Card key={i}>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <div className="h-4 w-1/3 bg-muted rounded"></div>
+                            <Skeleton className="h-4 w-[100px]" />
                         </CardHeader>
                         <CardContent>
-                            <div className="h-8 w-2/3 bg-muted rounded mt-2"></div>
+                            <Skeleton className="h-8 w-[120px] mt-2" />
                         </CardContent>
                     </Card>
                 ))}
