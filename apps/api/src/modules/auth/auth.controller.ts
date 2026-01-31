@@ -18,7 +18,7 @@ export class AuthController {
                 expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // Explicit expiration date
             });
 
-            res.json({ user });
+            res.json({ user, token });
         } catch (error: any) {
             if (error.message === 'User already exists') {
                 return res.status(409).json({ error: 'User already exists' });
@@ -43,7 +43,7 @@ export class AuthController {
                 expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // Explicit expiration date
             });
 
-            res.json({ user });
+            res.json({ user, token });
         } catch (error: any) {
             if (error.message === 'Invalid credentials') {
                 return res.status(401).json({ error: 'Invalid email or password' });

@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { postAPI } from "@/lib/api";
+import { postAPI, setToken } from "@/lib/api";
 import { useAuth } from "@/components/common/AuthContext";
 import { Lock, Mail, TrendingUp, ArrowRight } from "lucide-react";
 
@@ -29,10 +29,13 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      await postAPI("/auth/login", {
+      const data = await postAPI<{ token: string }>("/auth/login", {
         email: formData.email,
         password: formData.password
       });
+      if (data.token) {
+        setToken(data.token);
+      }
       await refetchUser();
       navigate("/");
     } catch (err) {

@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { fetchAPI, postAPI } from "@/lib/api";
+import { fetchAPI, postAPI, removeToken } from "@/lib/api";
 
 type User = {
     id: string;
@@ -41,6 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const logout = async () => {
         try {
             await postAPI("/auth/logout", {});
+            removeToken();
             setUser(null);
         } catch (error) {
             console.error("Logout failed", error);
