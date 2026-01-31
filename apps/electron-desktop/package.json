@@ -1,0 +1,45 @@
+{
+    "name": "electron-desktop",
+    "version": "1.0.0",
+    "description": "FinanceApp Desktop",
+    "main": "./out/main/index.js",
+    "author": "example.com",
+    "homepage": "https://example.com",
+    "scripts": {
+        "dev": "electron-vite dev",
+        "build": "pnpm --filter web build && mkdir -p out/renderer && cp -r ../web/dist/* out/renderer/ && electron-vite build && electron-builder",
+        "preview": "electron-vite preview",
+        "typecheck": "tsc --noEmit"
+    },
+    "dependencies": {
+        "@electron-toolkit/preload": "^3.0.0",
+        "@electron-toolkit/utils": "^3.0.0",
+        "react": "^19.0.0",
+        "react-dom": "^19.0.0"
+    },
+    "devDependencies": {
+        "@types/react": "^19.0.0",
+        "@types/react-dom": "^19.0.0",
+        "@vitejs/plugin-react": "^4.2.1",
+        "electron": "^28.2.0",
+        "electron-builder": "^24.9.1",
+        "electron-vite": "^2.0.0",
+        "typescript": "^5.3.3",
+        "vite": "^5.0.0"
+    },
+    "build": {
+        "appId": "com.financeapp.desktop",
+        "productName": "FinanceApp",
+        "directories": {
+            "output": "dist"
+        },
+        "files": [
+            "out/**/*",
+            "resources/**/*"
+        ],
+        "linux": {
+            "target": "AppImage",
+            "category": "Office"
+        }
+    }
+}

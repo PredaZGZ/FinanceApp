@@ -14,7 +14,8 @@
                 "dist/**",
                 ".next/**",
                 "!.next/cache/**",
-                "src-tauri/target/release/**"
+                "src-tauri/target/release/**",
+                "apps/electron-desktop/dist/**"
             ]
         },
         "lint": {
