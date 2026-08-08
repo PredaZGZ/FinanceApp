@@ -1,156 +1,78 @@
-# My Personal Finance App
+# FinanceApp
 
-A cross-platform personal finance system designed for rigorous, long-term financial tracking and analysis. It provides structured management of investments, loans, invoices, payroll, and derived analytics through a shared codebase deployed on desktop (macOS, Windows, Linux), mobile (iOS), and web. The backend acts as the authoritative source of truth, while clients are optimized for responsiveness via local caching and incremental updates.
+Private personal-finance tracker for imported investments, portfolio calculations, net-worth assets, salary records, and financial reports.
 
-## Overview
+## Current applications
 
-The application centralizes all personal financial data in a PostgreSQL-backed server, exposing a clean API to multiple clients built from a single monorepo. Desktop applications run through a Tauri v2 Rust shell for security, performance, and native OS integration. The architecture prioritizes deterministic data flow, reproducibility, and a uniform domain model shared across all platforms.
+- `apps/web`: React 19 and Vite web client.
+- `apps/api`: Express API backed by PostgreSQL and Prisma.
+- `apps/electron-desktop`: Electron desktop package.
+- `apps/tauri-desktop`: Tauri 2 desktop package.
 
-## Core Features
+There is currently no mobile client, offline database, event log, loan module, invoice module, or budgeting module.
 
-### Financial Domains
+## Requirements
 
-The system covers all principal personal-finance categories:
+- Node.js 24 or another version supported by the dependencies.
+- pnpm 10.26.0.
+- PostgreSQL.
+- `qpdf` to decrypt password-protected salary PDFs.
+- Rust and the Tauri system dependencies when building Tauri.
 
-- **Investments**: securities, ETFs, funds, forex, and portfolio evolution
-- **Loans** and amortization schedules
-- **Invoices**, billing, and issued/received documents
-- **Payroll**, recurrent income, and income classification
-- **Budgeting** and expense categories
-- **Analytical dashboards**: trends, aggregations, and time-series visualizations
+On Debian/Ubuntu, Tauri additionally needs the WebKitGTK 4.1 development packages described in the Tauri prerequisites. Electron does not require the Rust or WebKitGTK toolchain.
 
-These components follow unified domain rules to allow consistent processing across clients.
+## Local setup
 
-### Cross-Platform Clients
-
-- **Web client** built with React + Vite
-- **Desktop client** written in Rust + Tauri v2 using the same web UI bundle
-- **iOS client** listed as supported in the product baseline
-
-
-## Architecture
-
-### Monorepo Structure
-
-Managed with pnpm workspaces:
-
-- `apps/web`: React + Vite frontend
-- `apps/api`: Node.js + Express + TypeScript backend
-- `apps/tauri-desktop`: Tauri v2 desktop shell wrapping the web bundle
-
-This structure maintains deterministic builds and separates concerns between the API, the web client, and the desktop shell.
-
-### Backend
-
-- Server as the authoritative data store
-- PostgreSQL as main persistence engine
-- Encrypted server storage as baseline security model
-- Event-driven approach for extensibility of modules
-- REST API for client interaction
-- Layered architecture separating domain, application services, and transport
-
-### Desktop Runtime
-
-Tauri v2 runs the web application inside a secure Rust host. Rust handles:
-
-- File system access
-- Secure secrets storage
-- Native window management
-- Performance-critical operations
-- Isolation from browser runtime inconsistencies
-
-### Local Client Architecture
-
-The clients are designed to remain fast and deterministic even when remote operations are slow.
-The model is explicit to demonstrate architectural clarity:
-
-#### Local Persistence (Demonstration Architecture)
-
-Clients can operate using:
-
-- Encrypted SQLite database (optional future implementation)
-- WAL mode for high-frequency updates
-- Materialized local views for instant reads
-
-#### Event-Driven Write Pipeline
-
-- UI writes generate domain events
-- Events appended to a local log
-- A background worker uploads pending events
-- A cursor-based pull mechanism applies server updates
-- Materialized views rebuilt incrementally for deterministic state
-
-#### Intended Behaviour
-
-- Instant UI responses
-- No dependence on network round-trip
-- Predictable conflict resolution
-- Convergence driven by event ordering
-
-This section is intentionally explicit to reflect engineering discipline in state management.
-
-## Planned External Integrations
-
-The project includes planned connectors for future releases:
-
-- Broker APIs
-- Banking data exports
-- FX rate providers
-- Document ingestion pipelines
-
-No assumptions made beyond the baseline.
-
-## Development Setup
-
-### Requirements
-
-- Node.js
-- pnpm
-- Rust toolchain
-- PostgreSQL
-
-### Install Dependencies
+Install the exact dependency graph:
 
 ```bash
-pnpm install
+pnpm install --frozen-lockfile
 ```
 
-### Development
+Create `apps/api/.env` from `apps/api/.env.example` and replace all three cryptographic placeholders with independent random 32-byte hexadecimal values. In non-production development, the API can create a local `.env` with unique random secrets on its first start.
 
-Run backend + desktop:
+Create or update the database:
+
+```bash
+pnpm --filter api db:migrate
+```
+
+Start the API and web client:
 
 ```bash
 pnpm dev
 ```
 
-Web client:
+The web client uses `http://localhost:3001` by default. Override it with `VITE_API_URL` when the API is hosted elsewhere.
+
+## Commands
 
 ```bash
-pnpm dev:web
+pnpm dev                 # API and web
+pnpm dev:electron        # API, web, and Electron
+pnpm dev:tauri           # API and Tauri
+pnpm build               # API and web production builds
+pnpm build:electron      # Electron and its web dependency
+pnpm build:tauri         # Tauri and its web dependency
+pnpm lint
+pnpm test
+pnpm check               # lint, tests, and API/web builds
+pnpm audit --prod
 ```
 
-API:
+## Data and security notes
 
-```bash
-pnpm dev:api
-```
+- User-owned imports are deduplicated within each user account.
+- Monetary database columns use fixed-precision decimal storage.
+- Portfolio totals become unavailable when a required historical exchange rate is missing; the API does not assume a 1:1 conversion.
+- Net-worth values are reported separately by currency.
+- Salary uploads accept PDF, JPEG, and PNG files up to 10 MB.
+- JWT, password pepper, and encryption keys are mandatory in production.
 
-Desktop:
+## Database migrations
 
-```bash
-pnpm dev:desktop
-```
-
-### Build
-
-```bash
-pnpm build
-```
-
-## Status
-
-Early Development. The foundational architecture, tooling, workspace design, and core domain scaffolding are being established. Functionality evolves iteratively with strict attention to determinism, performance, and correctness.
+Prisma migrations live in `apps/api/prisma/migrations`. Existing installations created from the legacy `db/init.sql` must baseline the initial migration before running `prisma migrate deploy`; new installations can deploy migrations directly.
 
 ## License
 
-Proprietary / Private.
+Proprietary and private. See `LICENSE`.
