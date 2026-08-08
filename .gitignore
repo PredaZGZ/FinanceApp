@@ -1,7 +1,6 @@
 # Node / pnpm
 node_modules/
 .pnpm-store/
-pnpm-lock.yaml
 
 # Logs
 npm-debug.log*
@@ -30,7 +29,6 @@ apps/tauri-desktop/target/
 
 # Rust / Cargo
 target/
-Cargo.lock
 
 # IDE / Editor
 .vscode/

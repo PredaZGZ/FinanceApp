@@ -35,7 +35,7 @@
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.0.2",
     "pdf-lib": "^1.17.1",
-    "pdfjs-dist": "^5.4.530",
+    "pdfjs-dist": "^6.2.108",
     "pg": "^8.16.3",
     "yahoo-finance2": "^3.12.0",
     "zod": "^4.2.1"

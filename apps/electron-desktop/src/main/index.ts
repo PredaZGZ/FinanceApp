@@ -13,18 +13,21 @@ function createWindow(): void {
         ...(process.platform === 'linux' ? { icon } : {}),
         webPreferences: {
             preload: join(__dirname, '../preload/index.js'),
-            sandbox: false,
-            webSecurity: false
+            sandbox: true,
+            webSecurity: true,
+            contextIsolation: true,
+            nodeIntegration: false
         }
     })
 
     mainWindow.on('ready-to-show', () => {
         mainWindow.show()
-        mainWindow.webContents.openDevTools()
+        if (is.dev) mainWindow.webContents.openDevTools()
     })
 
     mainWindow.webContents.setWindowOpenHandler((details) => {
-        shell.openExternal(details.url)
+        const protocol = new URL(details.url).protocol
+        if (protocol === 'https:' || protocol === 'http:') shell.openExternal(details.url)
         return { action: 'deny' }
     })
 
