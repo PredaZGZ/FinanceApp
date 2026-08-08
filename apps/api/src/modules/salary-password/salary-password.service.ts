@@ -1,4 +1,4 @@
-import pool from '../../common/db/client';
+import { prisma } from '../../common/db/prisma';
 import { encrypt } from '../../common/utils/encryption';
 import type { CreateSalaryPasswordInput } from './salary-password.schema';
 
@@ -7,37 +7,35 @@ export class SalaryPasswordService {
         // Encrypt the password
         const { iv, encryptedData } = encrypt(data.passphrase);
 
-        const res = await pool.query(
-            `INSERT INTO salary_pdf_passwords ("userId", "encryptedPassword", "iv", "label")
-             VALUES ($1, $2, $3, $4)
-             RETURNING id, label, "createdAt"`,
-            [userId, encryptedData, iv, data.label]
-        );
-        return res.rows[0];
+        return prisma.salaryPdfPassword.create({
+            data: {
+                userId,
+                encryptedPassword: encryptedData,
+                iv,
+                label: data.label,
+            },
+            select: { id: true, label: true, createdAt: true },
+        });
     }
 
     async findAll(userId: string) {
         // Return only metadata, never the password
-        const res = await pool.query(
-            `SELECT id, label, "createdAt" FROM salary_pdf_passwords WHERE "userId" = $1 ORDER BY "createdAt" DESC`,
-            [userId]
-        );
-        return res.rows;
+        return prisma.salaryPdfPassword.findMany({
+            where: { userId },
+            select: { id: true, label: true, createdAt: true },
+            orderBy: { createdAt: 'desc' },
+        });
     }
 
     async findAllWithSecrets(userId: string) {
-        const res = await pool.query(
-            `SELECT id, "encryptedPassword", "iv" FROM salary_pdf_passwords WHERE "userId" = $1`,
-            [userId]
-        );
-        return res.rows;
+        return prisma.salaryPdfPassword.findMany({
+            where: { userId },
+            select: { id: true, encryptedPassword: true, iv: true },
+        });
     }
 
     async delete(userId: string, id: string) {
-        await pool.query(
-            `DELETE FROM salary_pdf_passwords WHERE id = $1 AND "userId" = $2`,
-            [id, userId]
-        );
+        await prisma.salaryPdfPassword.deleteMany({ where: { id, userId } });
     }
 }
 
