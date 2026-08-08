@@ -1,8 +1,8 @@
 
 import argon2 from 'argon2';
 import jwt from 'jsonwebtoken';
-import pool from '../../common/db/client';
 import { z } from 'zod';
+import { prisma } from '../../common/db/prisma';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-change-me';
 const PEPPER = process.env.PEPPER || 'default-pepper-ChangeMeInProduction!';
@@ -22,8 +22,11 @@ export class AuthService {
         const { email, password } = data;
 
         // Check if user exists
-        const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
-        if (existing.rows.length > 0) {
+        const existing = await prisma.user.findUnique({
+            where: { email },
+            select: { id: true },
+        });
+        if (existing) {
             throw new Error('User already exists');
         }
 
@@ -33,40 +36,26 @@ export class AuthService {
             secret: Buffer.from(PEPPER)
         });
 
-        const client = await pool.connect();
-        try {
-            await client.query('BEGIN');
+        const user = await prisma.user.create({
+            data: { email, passwordHash },
+            select: { id: true, email: true, createdAt: true },
+        });
 
-            const insertRes = await client.query(
-                'INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id, email, "createdAt"',
-                [email, passwordHash]
-            );
-            const user = insertRes.rows[0];
-
-            await client.query('COMMIT');
-
-            const token = this.generateToken(user.id);
-            return { user, token };
-        } catch (e) {
-            await client.query('ROLLBACK');
-            throw e;
-        } finally {
-            client.release();
-        }
+        const token = this.generateToken(user.id);
+        return { user, token };
     }
 
     async login(data: z.infer<typeof loginSchema>) {
         const { email, password } = data;
 
-        const res = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
-        if (res.rows.length === 0) {
+        const user = await prisma.user.findUnique({ where: { email } });
+        if (!user) {
             throw new Error('Invalid credentials');
         }
 
-        const user = res.rows[0];
         // Verify with Argon2 and Pepper
         try {
-            const match = await argon2.verify(user.password_hash, password, {
+            const match = await argon2.verify(user.passwordHash, password, {
                 secret: Buffer.from(PEPPER)
             });
 
@@ -80,16 +69,22 @@ export class AuthService {
 
         const token = this.generateToken(user.id);
 
-        // Remove password hash from response
-        delete user.password_hash;
-
-        return { user, token };
+        return {
+            user: {
+                id: user.id,
+                email: user.email,
+                createdAt: user.createdAt,
+                updatedAt: user.updatedAt,
+            },
+            token,
+        };
     }
 
     async getMe(userId: string) {
-        const res = await pool.query('SELECT id, email, "createdAt" FROM users WHERE id = $1', [userId]);
-        if (res.rows.length === 0) return null;
-        return res.rows[0];
+        return prisma.user.findUnique({
+            where: { id: userId },
+            select: { id: true, email: true, createdAt: true },
+        });
     }
 
     private generateToken(userId: string) {
