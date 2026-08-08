@@ -83,6 +83,7 @@ export class RevolutService {
                 // Stock Trades
                 if (currencyData.stockTrades) {
                     for (const trade of currencyData.stockTrades) {
+                        const conversionRate = this.findConversionRate(trade.date, trade.currency, currencyData.cashTransfers);
                         const result = await tx.stockTrade.createMany({
                             data: {
                                 id: randomUUID(),
@@ -94,6 +95,9 @@ export class RevolutService {
                                 price: trade.price,
                                 side: trade.side as TradeSide,
                                 value: trade.value,
+                                eurCost: conversionRate === null ? null : trade.value * conversionRate,
+                                eurValue: conversionRate === null ? null : trade.value * conversionRate,
+                                conversionRate,
                                 fees: trade.fees,
                                 commission: trade.commission,
                                 source: 'revolut_statement',
@@ -134,6 +138,25 @@ export class RevolutService {
             return insertedCount;
 
         });
+    }
+
+    private findConversionRate(
+        tradeDate: string,
+        currency: 'EUR' | 'USD',
+        cashTransfers: CashTransfer[] = [],
+    ): number | null {
+        if (currency === 'EUR') return 1;
+
+        const timestamp = new Date(tradeDate).getTime();
+        const candidates = cashTransfers
+            .filter((transfer) => transfer.conversionRate && transfer.conversionRate > 0)
+            .map((transfer) => ({
+                rate: transfer.conversionRate as number,
+                distance: Math.abs(new Date(transfer.date).getTime() - timestamp),
+            }))
+            .sort((left, right) => left.distance - right.distance);
+
+        return candidates[0]?.rate ?? null;
     }
 
     private parseAccountInfo(text: string) {
