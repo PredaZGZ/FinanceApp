@@ -137,7 +137,7 @@ export class MyInvestorService {
                             symbol,
                             isin: bestMatch?.isin ?? null,
                             name: bestMatch ? (FUND_NAMES[bestMatch.isin] ?? symbol) : null,
-                            assetType: bestMatch ? 'Fund' : null,
+                            assetType: 'Fund',
                             type: 'Fund',
                             quantity,
                             price,
