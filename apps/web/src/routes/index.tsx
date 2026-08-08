@@ -10,6 +10,7 @@ import PortfolioAnalysisPage from "@/pages/portfolio/PortfolioAnalysisPage";
 import ImportPage from "@/pages/import-data/ImportPage";
 import NetWorthPage from "@/pages/net-worth/NetWorthPage";
 import SalaryPage from "@/pages/salary/SalaryPage";
+import ReportsPage from "@/pages/reports/ReportsPage";
 import { transactionsRoutes } from "./transactions.routes";
 import { AuthProvider } from "@/components/common/AuthContext";
 import ProtectedRoute from "@/components/common/ProtectedRoute";
@@ -57,6 +58,10 @@ const router = createBrowserRouter([
               {
                 path: "salary",
                 element: <SalaryPage />,
+              },
+              {
+                path: "reports",
+                element: <ReportsPage />,
               },
               ...transactionsRoutes,
               {
