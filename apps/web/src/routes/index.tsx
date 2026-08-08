@@ -11,6 +11,7 @@ import ImportPage from "@/pages/import-data/ImportPage";
 import NetWorthPage from "@/pages/net-worth/NetWorthPage";
 import SalaryPage from "@/pages/salary/SalaryPage";
 import ReportsPage from "@/pages/reports/ReportsPage";
+import AccountSettingsPage from "@/pages/settings/AccountSettingsPage";
 import { transactionsRoutes } from "./transactions.routes";
 import { AuthProvider } from "@/components/common/AuthContext";
 import ProtectedRoute from "@/components/common/ProtectedRoute";
@@ -62,6 +63,10 @@ const router = createBrowserRouter([
               {
                 path: "reports",
                 element: <ReportsPage />,
+              },
+              {
+                path: "settings",
+                element: <AccountSettingsPage />,
               },
               ...transactionsRoutes,
               {

@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { UserAvatar } from "@/components/common/UserAvatar";
 
 export default function MainLayout() {
   const { user, logout } = useAuth();
@@ -123,13 +124,7 @@ export default function MainLayout() {
             </h1>
           </div>
           <div className="flex items-center gap-4">
-            {user?.profileImage ? (
-              <img src={user.profileImage} alt="Profile" className="h-8 w-8 rounded-full border border-border object-cover" />
-            ) : (
-              <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center text-xs font-medium border border-border">
-                {user?.name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || "U"}
-              </div>
-            )}
+            <UserAvatar user={user} className="h-8 w-8 rounded-full" iconClassName="h-4 w-4" />
           </div>
         </header>
 
