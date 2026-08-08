@@ -63,6 +63,7 @@ export default function MainLayout() {
             size="icon"
             className="ml-auto md:hidden text-sidebar-foreground hover:bg-sidebar-accent"
             onClick={() => setIsMobileMenuOpen(false)}
+            aria-label="Close navigation"
           >
             <X className="h-5 w-5" />
           </Button>
@@ -103,7 +104,8 @@ export default function MainLayout() {
               variant="ghost"
               size="icon"
               className="md:hidden -ml-2 text-muted-foreground"
-              onClick={() => setIsMobileMenuOpen(true)}
+            onClick={() => setIsMobileMenuOpen(true)}
+            aria-label="Open navigation"
             >
               <Menu className="h-5 w-5" />
             </Button>

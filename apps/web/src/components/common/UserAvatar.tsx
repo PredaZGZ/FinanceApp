@@ -16,12 +16,12 @@ export function UserAvatar({ user, icon, color, className, iconClassName }: User
     const selectedColor = color ?? user?.avatarColor ?? "slate";
     const Icon = avatarIcons.find((item) => item.value === selectedIcon)?.icon ?? UserRound;
     const colorClass = avatarColors.find((item) => item.value === selectedColor)?.className ?? avatarColors[0].className;
-    const accessibleName = user?.name || user?.email || "Usuario";
+    const accessibleName = user?.name || user?.email || "User";
 
     return (
         <span
             role="img"
-            aria-label={`Avatar de ${accessibleName}`}
+            aria-label={`Avatar of ${accessibleName}`}
             className={cn("inline-flex shrink-0 items-center justify-center rounded-xl shadow-sm", colorClass, className)}
         >
             <Icon aria-hidden="true" className={cn("h-5 w-5", iconClassName)} />

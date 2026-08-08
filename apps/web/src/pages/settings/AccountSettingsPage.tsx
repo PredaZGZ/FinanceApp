@@ -66,9 +66,9 @@ export default function AccountSettingsPage() {
         try {
             await fetchAPI("/auth/profile", { method: "PATCH", body: JSON.stringify(profile) });
             await refetchUser();
-            setProfileNotice({ type: "success", text: "Tu perfil y preferencias se han guardado." });
+            setProfileNotice({ type: "success", text: "Your profile and preferences have been saved." });
         } catch (error) {
-            setProfileNotice({ type: "error", text: error instanceof Error ? error.message : "No se pudo guardar el perfil." });
+            setProfileNotice({ type: "error", text: error instanceof Error ? error.message : "The profile could not be saved." });
         } finally {
             setSavingProfile(false);
         }
@@ -78,7 +78,7 @@ export default function AccountSettingsPage() {
         event.preventDefault();
         setPasswordNotice(null);
         if (passwords.newPassword !== passwords.confirmPassword) {
-            setPasswordNotice({ type: "error", text: "Las contraseñas nuevas no coinciden." });
+            setPasswordNotice({ type: "error", text: "The new passwords do not match." });
             return;
         }
         setSavingPassword(true);
@@ -89,27 +89,27 @@ export default function AccountSettingsPage() {
             });
             setToken(response.token);
             setPasswords({ currentPassword: "", newPassword: "", confirmPassword: "" });
-            setPasswordNotice({ type: "success", text: "Contraseña actualizada. El resto de sesiones se han cerrado." });
+            setPasswordNotice({ type: "success", text: "Password updated. Your other sessions have been signed out." });
         } catch (error) {
-            setPasswordNotice({ type: "error", text: error instanceof Error ? error.message : "No se pudo actualizar la contraseña." });
+            setPasswordNotice({ type: "error", text: error instanceof Error ? error.message : "The password could not be updated." });
         } finally {
             setSavingPassword(false);
         }
     };
 
     const passwordChecks = [
-        { label: "10 caracteres", valid: passwords.newPassword.length >= 10 },
-        { label: "Una mayúscula", valid: /[A-Z]/.test(passwords.newPassword) },
-        { label: "Una minúscula", valid: /[a-z]/.test(passwords.newPassword) },
-        { label: "Un número", valid: /\d/.test(passwords.newPassword) },
+        { label: "10 characters", valid: passwords.newPassword.length >= 10 },
+        { label: "One uppercase letter", valid: /[A-Z]/.test(passwords.newPassword) },
+        { label: "One lowercase letter", valid: /[a-z]/.test(passwords.newPassword) },
+        { label: "One number", valid: /\d/.test(passwords.newPassword) },
     ];
 
     return (
         <div className="mx-auto w-full max-w-5xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
             <div className="space-y-2">
-                <p className="text-sm font-medium text-muted-foreground">Cuenta</p>
-                <h2 className="text-3xl font-bold tracking-tight">Configuración</h2>
-                <p className="max-w-2xl text-muted-foreground">Gestiona cómo apareces en FinanceApp, tus preferencias regionales y la seguridad de tu cuenta.</p>
+                <p className="text-sm font-medium text-muted-foreground">Account</p>
+                <h2 className="text-3xl font-bold tracking-tight">Settings</h2>
+                <p className="max-w-2xl text-muted-foreground">Manage how you appear in FinanceApp, your regional preferences and account security.</p>
             </div>
 
             <form onSubmit={saveProfile} className="space-y-6">
@@ -118,8 +118,8 @@ export default function AccountSettingsPage() {
                         <div className="flex items-center gap-3">
                             <UserRoundCog className="h-5 w-5 text-muted-foreground" />
                             <div>
-                                <CardTitle>Perfil</CardTitle>
-                                <CardDescription>Tu identidad visible en la aplicación.</CardDescription>
+                                <CardTitle>Profile</CardTitle>
+                                <CardDescription>Your visible identity throughout the application.</CardDescription>
                             </div>
                         </div>
                     </CardHeader>
@@ -127,9 +127,9 @@ export default function AccountSettingsPage() {
                         <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
                             <UserAvatar icon={profile.avatarIcon} color={profile.avatarColor} className="h-20 w-20 rounded-2xl" iconClassName="h-9 w-9" />
                             <div>
-                                <p className="font-semibold">Elige tu icono</p>
-                                <p className="mb-3 text-sm text-muted-foreground">Se mostrará en el menú de tu cuenta.</p>
-                                <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Icono de perfil">
+                                <p className="font-semibold">Choose your icon</p>
+                                <p className="mb-3 text-sm text-muted-foreground">It appears in your account menu.</p>
+                                <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Profile icon">
                                     {avatarIcons.map(({ value, label, icon: Icon }) => (
                                         <button
                                             key={value}
@@ -147,8 +147,8 @@ export default function AccountSettingsPage() {
                             </div>
                         </div>
                         <div>
-                            <Label className="mb-3 block">Color del avatar</Label>
-                            <div className="flex flex-wrap gap-3" role="radiogroup" aria-label="Color del avatar">
+                            <Label className="mb-3 block">Avatar color</Label>
+                            <div className="flex flex-wrap gap-3" role="radiogroup" aria-label="Avatar color">
                                 {avatarColors.map(({ value, label, className }) => (
                                     <button
                                         key={value}
@@ -166,11 +166,11 @@ export default function AccountSettingsPage() {
                         </div>
                         <div className="grid gap-5 md:grid-cols-2">
                             <div className="space-y-2">
-                                <Label htmlFor="name">Nombre</Label>
+                                <Label htmlFor="name">Name</Label>
                                 <Input id="name" value={profile.name} onChange={(event) => setProfile((current) => ({ ...current, name: event.target.value }))} minLength={2} maxLength={100} required autoComplete="name" />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="email">Correo electrónico</Label>
+                                <Label htmlFor="email">Email address</Label>
                                 <Input id="email" type="email" value={profile.email} onChange={(event) => setProfile((current) => ({ ...current, email: event.target.value }))} required autoComplete="email" />
                             </div>
                         </div>
@@ -179,12 +179,12 @@ export default function AccountSettingsPage() {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Preferencias regionales</CardTitle>
-                        <CardDescription>Se usarán en fechas, importes y futuros resúmenes.</CardDescription>
+                        <CardTitle>Regional preferences</CardTitle>
+                        <CardDescription>Used to format dates, amounts and future summaries.</CardDescription>
                     </CardHeader>
                     <CardContent className="grid gap-5 md:grid-cols-3">
                         <div className="space-y-2">
-                            <Label>Idioma y formato</Label>
+                            <Label>Language and format</Label>
                             <Select value={profile.locale} onValueChange={(value: "es-ES" | "en-US" | "en-GB") => setProfile((current) => ({ ...current, locale: value }))}>
                                 <SelectTrigger><SelectValue /></SelectTrigger>
                                 <SelectContent>
@@ -195,14 +195,14 @@ export default function AccountSettingsPage() {
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label>Zona horaria</Label>
+                            <Label>Time zone</Label>
                             <Select value={profile.timezone} onValueChange={(timezone) => setProfile((current) => ({ ...current, timezone }))}>
                                 <SelectTrigger><SelectValue /></SelectTrigger>
                                 <SelectContent>{timezones.map((timezone) => <SelectItem key={timezone} value={timezone}>{timezone.replaceAll("_", " ")}</SelectItem>)}</SelectContent>
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label>Moneda principal</Label>
+                            <Label>Primary currency</Label>
                             <Select value={profile.preferredCurrency} onValueChange={(preferredCurrency: "EUR" | "USD") => setProfile((current) => ({ ...current, preferredCurrency }))}>
                                 <SelectTrigger><SelectValue /></SelectTrigger>
                                 <SelectContent>
@@ -218,7 +218,7 @@ export default function AccountSettingsPage() {
                 <div className="flex justify-end">
                     <Button type="submit" disabled={savingProfile || !profile.name.trim()} className="min-w-36">
                         {savingProfile && <LoaderCircle className="h-4 w-4 animate-spin" />}
-                        {savingProfile ? "Guardando…" : "Guardar cambios"}
+                        {savingProfile ? "Saving…" : "Save changes"}
                     </Button>
                 </div>
             </form>
@@ -229,17 +229,17 @@ export default function AccountSettingsPage() {
                         <div className="flex items-center gap-3">
                             <ShieldCheck className="h-5 w-5 text-muted-foreground" />
                             <div>
-                                <CardTitle>Seguridad</CardTitle>
-                                <CardDescription>Cambia tu contraseña y protege el acceso a tus finanzas.</CardDescription>
+                                <CardTitle>Security</CardTitle>
+                                <CardDescription>Change your password and protect access to your finances.</CardDescription>
                             </div>
                         </div>
                     </CardHeader>
                     <CardContent className="space-y-6 pt-6">
                         <div className="grid gap-5 md:grid-cols-3">
                             {[
-                                { id: "currentPassword", label: "Contraseña actual", value: passwords.currentPassword, autoComplete: "current-password" },
-                                { id: "newPassword", label: "Nueva contraseña", value: passwords.newPassword, autoComplete: "new-password" },
-                                { id: "confirmPassword", label: "Confirmar contraseña", value: passwords.confirmPassword, autoComplete: "new-password" },
+                                { id: "currentPassword", label: "Current password", value: passwords.currentPassword, autoComplete: "current-password" },
+                                { id: "newPassword", label: "New password", value: passwords.newPassword, autoComplete: "new-password" },
+                                { id: "confirmPassword", label: "Confirm password", value: passwords.confirmPassword, autoComplete: "new-password" },
                             ].map((field, index) => (
                                 <div className="space-y-2" key={field.id}>
                                     <Label htmlFor={field.id}>{field.label}</Label>
@@ -255,7 +255,7 @@ export default function AccountSettingsPage() {
                                             className={index === 2 ? "pr-10" : undefined}
                                         />
                                         {index === 2 && (
-                                            <button type="button" onClick={() => setShowPasswords((visible) => !visible)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" aria-label={showPasswords ? "Ocultar contraseñas" : "Mostrar contraseñas"}>
+                                            <button type="button" onClick={() => setShowPasswords((visible) => !visible)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" aria-label={showPasswords ? "Hide passwords" : "Show passwords"}>
                                                 {showPasswords ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                             </button>
                                         )}
@@ -274,7 +274,7 @@ export default function AccountSettingsPage() {
                         <div className="flex justify-end">
                             <Button type="submit" variant="outline" disabled={savingPassword || passwordChecks.some((check) => !check.valid)}>
                                 {savingPassword ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
-                                {savingPassword ? "Actualizando…" : "Actualizar contraseña"}
+                                {savingPassword ? "Updating…" : "Update password"}
                             </Button>
                         </div>
                     </CardContent>
