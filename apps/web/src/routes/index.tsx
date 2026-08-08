@@ -12,6 +12,8 @@ import NetWorthPage from "@/pages/net-worth/NetWorthPage";
 import SalaryPage from "@/pages/salary/SalaryPage";
 import ReportsPage from "@/pages/reports/ReportsPage";
 import ProjectsPage from "@/pages/projects/ProjectsPage";
+import AccountSettingsPage from "@/pages/settings/AccountSettingsPage";
+import SupportPage from "@/pages/support/SupportPage";
 import { transactionsRoutes } from "./transactions.routes";
 import { AuthProvider } from "@/components/common/AuthContext";
 import ProtectedRoute from "@/components/common/ProtectedRoute";
@@ -67,6 +69,14 @@ const router = createBrowserRouter([
               {
                 path: "projects",
                 element: <ProjectsPage />,
+              },
+              {
+                path: "settings",
+                element: <AccountSettingsPage />,
+              },
+              {
+                path: "support",
+                element: <SupportPage />,
               },
               ...transactionsRoutes,
               {

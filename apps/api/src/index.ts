@@ -38,16 +38,26 @@ app.use("/auth/register", authLimiter);
 import { errorHandler } from "./common/middleware/errorHandler";
 import { requestLogger } from "./common/middleware/requestLogger";
 
+const trustedOrigins = new Set([
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'http://localhost:4000',
+    'tauri://localhost',
+    'https://tauri.localhost',
+]);
+
 app.use(cors({
-    origin: [
-        'http://localhost:5173',
-        'http://127.0.0.1:5173',
-        'http://localhost:3000',
-        'http://127.0.0.1:3000',
-        'http://localhost:4000',
-        'tauri://localhost',
-        'https://tauri.localhost'
-    ],
+    origin: (origin, callback) => {
+        const isLocalDevelopmentOrigin = process.env.NODE_ENV !== 'production'
+            && Boolean(origin?.match(/^http:\/\/(localhost|127\.0\.0\.1):\d+$/));
+        if (!origin || trustedOrigins.has(origin) || isLocalDevelopmentOrigin) {
+            callback(null, true);
+            return;
+        }
+        callback(new Error('Origin not allowed by CORS'));
+    },
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
 }));
