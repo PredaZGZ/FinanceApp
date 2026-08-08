@@ -18,6 +18,8 @@ export interface ProjectEntry {
     description: string;
     category: string | null;
     date: string;
+    fileName: string | null;
+    fileMimeType: string | null;
     createdAt: string;
 }
 

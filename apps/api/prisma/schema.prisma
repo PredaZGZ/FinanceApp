@@ -61,16 +61,19 @@ model Project {
 }
 
 model ProjectEntry {
-  id          String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  projectId   String           @db.Uuid
-  type        ProjectEntryType
-  amount      Decimal          @db.Decimal(14, 2)
-  description String
-  category    String?
-  date        DateTime         @db.Date
-  createdAt   DateTime         @default(now()) @db.Timestamptz(6)
-  updatedAt   DateTime         @default(now()) @updatedAt @db.Timestamptz(6)
-  project     Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  id             String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId      String           @db.Uuid
+  type           ProjectEntryType
+  amount         Decimal          @db.Decimal(14, 2)
+  description    String
+  category       String?
+  date           DateTime         @db.Date
+  fileName       String?
+  fileStorageKey String?
+  fileMimeType   String?
+  createdAt      DateTime         @default(now()) @db.Timestamptz(6)
+  updatedAt      DateTime         @default(now()) @updatedAt @db.Timestamptz(6)
+  project        Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
   @@index([projectId, date])

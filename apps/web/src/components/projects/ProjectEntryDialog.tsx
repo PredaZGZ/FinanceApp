@@ -10,7 +10,7 @@ interface ProjectEntryDialogProps {
     open: boolean;
     type: ProjectEntryType;
     onOpenChange: (open: boolean) => void;
-    onSubmit: (data: { type: ProjectEntryType; amount: number; description: string; category?: string; date: string }) => Promise<void>;
+    onSubmit: (data: { type: ProjectEntryType; amount: number; description: string; category?: string; date: string; file?: File }) => Promise<void>;
 }
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -20,6 +20,7 @@ export function ProjectEntryDialog({ open, type, onOpenChange, onSubmit }: Proje
     const [description, setDescription] = useState('');
     const [category, setCategory] = useState('');
     const [date, setDate] = useState(today());
+    const [file, setFile] = useState<File | null>(null);
     const [entryType, setEntryType] = useState<ProjectEntryType>(type);
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState('');
@@ -29,6 +30,7 @@ export function ProjectEntryDialog({ open, type, onOpenChange, onSubmit }: Proje
         setDescription('');
         setCategory('');
         setDate(today());
+        setFile(null);
         setEntryType(type);
         setError('');
     };
@@ -45,7 +47,7 @@ export function ProjectEntryDialog({ open, type, onOpenChange, onSubmit }: Proje
         setIsSaving(true);
         setError('');
         try {
-            await onSubmit({ type: entryType, amount: parsedAmount, description: description.trim(), category: category.trim() || undefined, date });
+            await onSubmit({ type: entryType, amount: parsedAmount, description: description.trim(), category: category.trim() || undefined, date, file: file || undefined });
             handleOpenChange(false);
         } catch (submitError) {
             setError(submitError instanceof Error ? submitError.message : 'Entry could not be saved');
@@ -91,6 +93,16 @@ export function ProjectEntryDialog({ open, type, onOpenChange, onSubmit }: Proje
                             <Label htmlFor="entry-date">Date</Label>
                             <Input id="entry-date" type="date" value={date} onChange={(event) => setDate(event.target.value)} required />
                         </div>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="entry-file">Invoice or document</Label>
+                        <Input
+                            id="entry-file"
+                            type="file"
+                            accept="application/pdf,image/jpeg,image/png"
+                            onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+                        />
+                        <p className="text-xs text-muted-foreground">Optional PDF, JPG, or PNG up to 10 MB.</p>
                     </div>
                     {error && <p className="text-sm text-destructive">{error}</p>}
                     <DialogFooter>

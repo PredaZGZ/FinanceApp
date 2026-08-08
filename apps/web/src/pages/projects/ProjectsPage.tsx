@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ArrowDownLeft, ArrowUpRight, FolderKanban, Plus, Trash2, WalletCards } from 'lucide-react';
+import { ArrowDownLeft, ArrowUpRight, FileText, FolderKanban, Plus, Trash2, WalletCards } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { ProjectDialog } from '@/components/projects/ProjectDialog';
 import { ProjectEntryDialog } from '@/components/projects/ProjectEntryDialog';
 import type { ProjectDetail, ProjectEntryType, ProjectSummary } from '@/components/projects/project.types';
-import { fetchAPI, postAPI } from '@/lib/api';
+import { fetchAPI, fetchBlob, postAPI } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EUR' });
@@ -65,10 +65,29 @@ export default function ProjectsPage() {
         setSelectedId(project.id);
     };
 
-    const createEntry = async (data: { type: ProjectEntryType; amount: number; description: string; category?: string; date: string }) => {
+    const createEntry = async (data: { type: ProjectEntryType; amount: number; description: string; category?: string; date: string; file?: File }) => {
         if (!selectedId) return;
-        await postAPI(`/projects/${selectedId}/entries`, data);
+        const form = new FormData();
+        form.append('type', data.type);
+        form.append('amount', String(data.amount));
+        form.append('description', data.description);
+        if (data.category) form.append('category', data.category);
+        form.append('date', data.date);
+        if (data.file) form.append('file', data.file);
+        await postAPI(`/projects/${selectedId}/entries`, form);
         await refresh(selectedId);
+    };
+
+    const openEntryFile = async (entryId: string) => {
+        if (!selectedId) return;
+        try {
+            const blob = await fetchBlob(`/projects/${selectedId}/entries/${entryId}/file`);
+            const url = URL.createObjectURL(blob);
+            window.open(url, '_blank', 'noopener,noreferrer');
+            window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+        } catch (fileError) {
+            setError(fileError instanceof Error ? fileError.message : 'Document could not be opened');
+        }
     };
 
     const confirmDelete = async () => {
@@ -166,8 +185,14 @@ export default function ProjectsPage() {
                                                             <div className="font-medium">{entry.description}</div>
                                                             <div className="mt-1 text-xs text-muted-foreground">{dateFormatter.format(new Date(entry.date))}{entry.category ? ` · ${entry.category}` : ''}</div>
                                                         </div>
-                                                        <Button variant="ghost" size="icon" className="-mr-2 -mt-2 shrink-0" onClick={() => setDeleteTarget({ kind: 'entry', id: entry.id, name: entry.description })} title="Delete entry"><Trash2 className="h-4 w-4" /></Button>
+                                                        <div className="-mr-2 -mt-2 flex shrink-0">
+                                                            {entry.fileName && (
+                                                                <Button variant="ghost" size="icon" onClick={() => void openEntryFile(entry.id)} title="Open document"><FileText className="h-4 w-4 text-primary" /></Button>
+                                                            )}
+                                                            <Button variant="ghost" size="icon" onClick={() => setDeleteTarget({ kind: 'entry', id: entry.id, name: entry.description })} title="Delete entry"><Trash2 className="h-4 w-4" /></Button>
+                                                        </div>
                                                     </div>
+                                                    {entry.fileName && <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground"><FileText className="h-3 w-3" />{entry.fileName}</div>}
                                                     <div className="mt-3 flex items-center justify-between gap-3">
                                                         <span className={cn('rounded-full px-2 py-1 text-xs font-medium', entry.type === 'INCOME' ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400' : 'bg-destructive/10 text-destructive')}>{entry.type === 'INCOME' ? 'Income' : 'Expense'}</span>
                                                         <span className={cn('font-semibold', entry.type === 'INCOME' ? 'text-emerald-600 dark:text-emerald-400' : 'text-destructive')}>{entry.type === 'INCOME' ? '+' : '−'}{money.format(entry.amount)}</span>
@@ -177,13 +202,21 @@ export default function ProjectsPage() {
                                         </div>
                                         <div className="hidden sm:block">
                                             <Table>
-                                                <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Description</TableHead><TableHead>Category</TableHead><TableHead>Type</TableHead><TableHead className="text-right">Amount</TableHead><TableHead className="w-12" /></TableRow></TableHeader>
+                                                <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Description</TableHead><TableHead>Category</TableHead><TableHead>Type</TableHead><TableHead>Document</TableHead><TableHead className="text-right">Amount</TableHead><TableHead className="w-12" /></TableRow></TableHeader>
                                                 <TableBody>{detail.entries.map((entry) => (
                                                     <TableRow key={entry.id}>
                                                         <TableCell className="whitespace-nowrap">{dateFormatter.format(new Date(entry.date))}</TableCell>
                                                         <TableCell className="font-medium">{entry.description}</TableCell>
                                                         <TableCell className="text-muted-foreground">{entry.category || '—'}</TableCell>
                                                         <TableCell><span className={cn('rounded-full px-2 py-1 text-xs font-medium', entry.type === 'INCOME' ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400' : 'bg-destructive/10 text-destructive')}>{entry.type === 'INCOME' ? 'Income' : 'Expense'}</span></TableCell>
+                                                        <TableCell>
+                                                            {entry.fileName ? (
+                                                                <Button variant="ghost" size="sm" className="h-8 max-w-40 justify-start gap-2 px-2" onClick={() => void openEntryFile(entry.id)} title={entry.fileName}>
+                                                                    <FileText className="h-4 w-4 shrink-0 text-primary" />
+                                                                    <span className="truncate">{entry.fileName}</span>
+                                                                </Button>
+                                                            ) : '—'}
+                                                        </TableCell>
                                                         <TableCell className={cn('text-right font-semibold', entry.type === 'INCOME' ? 'text-emerald-600 dark:text-emerald-400' : 'text-destructive')}>{entry.type === 'INCOME' ? '+' : '−'}{money.format(entry.amount)}</TableCell>
                                                         <TableCell><Button variant="ghost" size="icon" onClick={() => setDeleteTarget({ kind: 'entry', id: entry.id, name: entry.description })} title="Delete entry"><Trash2 className="h-4 w-4" /></Button></TableCell>
                                                     </TableRow>
