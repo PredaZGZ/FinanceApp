@@ -28,9 +28,11 @@ app.use(limiter);
 const authLimiter = rateLimit({
     windowMs: 30 * 60 * 1000, // 30 minutes
     max: 25, // Limit each IP to 25 requests per windowMs
+    skip: (req) => req.method === 'OPTIONS',
     message: "Too many login attempts from this IP, please try again after 30 minutes"
 });
-app.use("/auth", authLimiter);
+app.use("/auth/login", authLimiter);
+app.use("/auth/register", authLimiter);
 
 // Middleware
 import { errorHandler } from "./common/middleware/errorHandler";

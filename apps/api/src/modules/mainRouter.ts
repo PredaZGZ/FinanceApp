@@ -6,6 +6,7 @@ import netWorthRouter from './networth/networth.routes';
 import salaryRouter from './salary/salary.routes';
 import salaryPasswordRouter from './salary-password/salary-password.routes';
 import pricesRouter from './prices/price.routes';
+import projectsRouter from './projects/projects.routes';
 
 import authRouter from './auth/auth.routes';
 
@@ -19,5 +20,6 @@ router.use("/networth", netWorthRouter);
 router.use("/salary", salaryRouter);
 router.use("/salary-passwords", salaryPasswordRouter);
 router.use("/prices", pricesRouter);
+router.use("/projects", projectsRouter);
 
 export default router;

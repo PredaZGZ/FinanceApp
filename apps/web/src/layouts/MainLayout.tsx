@@ -13,7 +13,8 @@ import {
   TrendingUp,
   LineChart,
   Upload,
-  Banknote
+  Banknote,
+  FolderKanban
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -31,6 +32,7 @@ export default function MainLayout() {
     { icon: ArrowRightLeft, label: "Transactions", path: "/transactions" },
     { icon: PieChart, label: "Reports", path: "/reports" },
     { icon: Banknote, label: "Salaries", path: "/salary" },
+    { icon: FolderKanban, label: "Projects", path: "/projects" },
     { icon: Upload, label: "Import Data", path: "/import" },
     { icon: Settings, label: "Settings", path: "/settings" },
   ];
@@ -64,6 +66,7 @@ export default function MainLayout() {
             size="icon"
             className="ml-auto md:hidden text-sidebar-foreground hover:bg-sidebar-accent"
             onClick={() => setIsMobileMenuOpen(false)}
+            aria-label="Cerrar menú"
           >
             <X className="h-5 w-5" />
           </Button>
@@ -115,6 +118,7 @@ export default function MainLayout() {
               size="icon"
               className="md:hidden -ml-2 text-muted-foreground"
               onClick={() => setIsMobileMenuOpen(true)}
+              aria-label="Abrir menú"
             >
               <Menu className="h-5 w-5" />
             </Button>
