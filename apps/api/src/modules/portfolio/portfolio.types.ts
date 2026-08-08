@@ -2,6 +2,8 @@ export interface StockTrade {
     id?: string;
     date: Date;
     symbol: string;
+    isin?: string | null;
+    name?: string | null;
     currency: string;
     quantity: number;
     price: number;
@@ -21,6 +23,8 @@ export interface TradeMatch {
 
 export interface CalculationResult {
     symbol: string;
+    isin?: string | null;
+    name?: string | null;
     currency: string;
     realizedGain: number;     // Total profit/loss from sold shares
     remainingShares: number;  // Shares currently held

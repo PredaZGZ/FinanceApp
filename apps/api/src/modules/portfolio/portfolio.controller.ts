@@ -29,6 +29,8 @@ export class PortfolioController {
             const trades: StockTrade[] = tradesResult.data.map((t: any) => ({
                 date: new Date(t.date),
                 symbol: t.symbol,
+                isin: t.isin,
+                name: t.name,
                 currency: t.currency,
                 quantity: t.quantity,
                 price: t.price,
@@ -75,6 +77,8 @@ export class PortfolioController {
             const trades: StockTrade[] = tradesResult.data.map((t: any) => ({
                 date: new Date(t.date),
                 symbol: t.symbol,
+                isin: t.isin,
+                name: t.name,
                 currency: t.currency,
                 quantity: t.quantity,
                 price: t.price,

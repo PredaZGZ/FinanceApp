@@ -90,6 +90,8 @@ export class PortfolioService {
 
         return {
             symbol: trades[0]?.symbol || '',
+            isin: trades[0]?.isin,
+            name: trades[0]?.name,
             currency: trades[0]?.currency || 'EUR',
             realizedGain,
             remainingShares,
@@ -164,6 +166,8 @@ export class PortfolioService {
 
         return {
             symbol: trades[0]?.symbol || '',
+            isin: trades[0]?.isin,
+            name: trades[0]?.name,
             currency: trades[0]?.currency || 'EUR',
             averageCost,
             totalCostBasis: totalCost,
@@ -245,6 +249,8 @@ export class PortfolioService {
                     // share count visible, but do not invent a monetary total
                     // by adding USD and EUR cost bases together.
                     symbol: native[0]?.symbol || '',
+                    isin: native[0]?.isin,
+                    name: native[0]?.name,
                     currency: targetCurrency,
                     realizedGain: 0,
                     remainingShares: native.reduce(
@@ -254,7 +260,7 @@ export class PortfolioService {
                     totalCostBasis: 0,
                     averageCost: 0,
                     breakdown: [],
-                };
+            };
             nativeResult.averageCost = nativeResult.remainingShares > 0
                 ? nativeResult.totalCostBasis / nativeResult.remainingShares
                 : 0;
