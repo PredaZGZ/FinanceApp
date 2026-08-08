@@ -48,7 +48,7 @@ export default function PortfolioAnalysisPage() {
                 <Button variant="outline" size="icon" onClick={() => navigate("/portfolio")}>
                     <ArrowLeft className="h-4 w-4" />
                 </Button>
-                <h1 className="text-3xl font-bold tracking-tight">{symbol} Analysis</h1>
+                <h1 className="text-3xl font-bold tracking-tight">{holding?.name || symbol} Analysis</h1>
             </div>
 
             <div className="flex gap-4 mb-6">

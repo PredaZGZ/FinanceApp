@@ -20,6 +20,8 @@ interface Transaction {
     date: string;
     currency: string;
     symbol: string;
+    name?: string | null;
+    isin?: string | null;
     type: string;
     quantity: number;
     price: number;
@@ -96,10 +98,12 @@ export default function TransactionsPage() {
     const sortedData = useMemo(() => {
         if (!sortConfig) return data;
         return [...data].sort((a, b) => {
-            if (a[sortConfig.key] < b[sortConfig.key]) {
+            const left = a[sortConfig.key];
+            const right = b[sortConfig.key];
+            if (String(left ?? '') < String(right ?? '')) {
                 return sortConfig.direction === "asc" ? -1 : 1;
             }
-            if (a[sortConfig.key] > b[sortConfig.key]) {
+            if (String(left ?? '') > String(right ?? '')) {
                 return sortConfig.direction === "asc" ? 1 : -1;
             }
             return 0;
@@ -245,7 +249,13 @@ export default function TransactionsPage() {
                                                 <TableCell className="text-muted-foreground">
                                                     {formatTime(tx.date)}
                                                 </TableCell>
-                                                <TableCell className="font-medium">{tx.symbol}</TableCell>
+                                                <TableCell className="font-medium">
+                                                    {tx.name || tx.symbol}
+                                                    <div className="text-xs text-muted-foreground">
+                                                        {tx.symbol}
+                                                        {tx.isin ? ` · ISIN ${tx.isin}` : ''}
+                                                    </div>
+                                                </TableCell>
                                                 <TableCell>{tx.type}</TableCell>
                                                 <TableCell>
                                                     <span

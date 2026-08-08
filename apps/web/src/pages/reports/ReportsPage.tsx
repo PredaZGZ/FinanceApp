@@ -26,6 +26,8 @@ interface Transaction {
     date: string;
     currency: string;
     symbol?: string;
+    name?: string | null;
+    isin?: string | null;
     type: string;
     side?: string;
     value: number;
@@ -375,8 +377,12 @@ export default function ReportsPage() {
                                         return (
                                             <TableRow key={`${holding.symbol}-${holding.currency}`}>
                                                 <TableCell>
-                                                    <div className="font-medium">{holding.symbol}</div>
-                                                    <div className="text-xs text-muted-foreground">{holding.currency}</div>
+                                                    <div className="font-medium">{holding.name || holding.symbol}</div>
+                                                    <div className="text-xs text-muted-foreground">
+                                                        {holding.symbol}
+                                                        {holding.isin ? ` · ISIN ${holding.isin}` : ''}
+                                                        {` · ${holding.currency}`}
+                                                    </div>
                                                 </TableCell>
                                                 <TableCell className="text-right">{numberFormatter.format(holding.remainingShares)}</TableCell>
                                                 <TableCell className="text-right">{formatCurrency(holding.totalCostBasis)}</TableCell>
@@ -440,7 +446,15 @@ export default function ReportsPage() {
                                     {data.transactions.data.map((transaction) => (
                                         <TableRow key={transaction.id}>
                                             <TableCell className="whitespace-nowrap">{formatDate(transaction.date)}</TableCell>
-                                            <TableCell className="font-medium">{transaction.symbol || transaction.type}</TableCell>
+                                            <TableCell className="font-medium">
+                                                {transaction.name || transaction.symbol || transaction.type}
+                                                {(transaction.symbol || transaction.isin) && (
+                                                    <div className="text-xs text-muted-foreground">
+                                                        {transaction.symbol}
+                                                        {transaction.isin ? ` · ISIN ${transaction.isin}` : ''}
+                                                    </div>
+                                                )}
+                                            </TableCell>
                                             <TableCell className="text-muted-foreground">{transaction.side || transaction.type}</TableCell>
                                             <TableCell className="text-right">
                                                 {formatCurrency(transaction.value)}

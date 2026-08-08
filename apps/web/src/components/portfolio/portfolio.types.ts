@@ -9,6 +9,8 @@ export interface BreakdownItem {
 
 export interface Holding {
     symbol: string;
+    name?: string | null;
+    isin?: string | null;
     currency: string;
     realizedGain: number;
     remainingShares: number;

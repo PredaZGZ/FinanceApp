@@ -87,10 +87,13 @@ export function PortfolioExposureChart({ holdings }: { holdings: Holding[] }) {
         .filter((holding) => holding.remainingShares > 0)
         .sort((left, right) => right.totalCostBasis - left.totalCostBasis)
         .slice(0, 8)
-        .map((holding) => ({
-            symbol: holding.symbol.length > 14 ? `${holding.symbol.slice(0, 14)}…` : holding.symbol,
+        .map((holding) => {
+            const label = holding.name || holding.symbol;
+            return {
+            symbol: label.length > 14 ? `${label.slice(0, 14)}…` : label,
             cost: holding.totalCostBasis,
-        }));
+            };
+        });
 
     return (
         <Card>

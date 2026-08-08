@@ -22,7 +22,7 @@ export function PortfolioTable({ holdings, prices }: PortfolioTableProps) {
             <Table className="min-w-[800px]">
                 <TableHeader>
                     <TableRow>
-                        <TableHead>Symbol</TableHead>
+                        <TableHead>Activo</TableHead>
                         <TableHead className="text-right">Quantity</TableHead>
                         <TableHead className="text-right">Avg Cost</TableHead>
                         <TableHead className="text-right">Current Price</TableHead>
@@ -75,8 +75,12 @@ export function PortfolioTable({ holdings, prices }: PortfolioTableProps) {
                             <TableRow key={holding.symbol}>
                                 <TableCell className="font-medium">
                                     <Link to={`/portfolio/${holding.symbol}`} className="hover:underline text-blue-500">
-                                        {holding.symbol}
+                                        {holding.name || holding.symbol}
                                     </Link>
+                                    <div className="text-xs text-muted-foreground">
+                                        {holding.symbol}
+                                        {holding.isin ? ` · ISIN ${holding.isin}` : ''}
+                                    </div>
                                 </TableCell>
                                 <TableCell className="text-right">
                                     {holding.remainingShares > 0 ? holding.remainingShares.toFixed(4) : '-'}
