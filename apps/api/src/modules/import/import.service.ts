@@ -6,8 +6,8 @@ export class ImportService {
     async importRevolut(userId: string, buffer: Buffer, originalName: string) {
         try {
             const statement = await revolutService.parseStatement(buffer);
-            await revolutService.saveToDb(userId, statement);
-            await this.logImport(userId, 'revolut', originalName, 'success', statement.currencies.length);
+            const insertedCount = await revolutService.saveToDb(userId, statement);
+            await this.logImport(userId, 'revolut', originalName, 'success', insertedCount);
             return statement;
         } catch (error: any) {
             await this.logImport(userId, 'revolut', originalName, 'error', 0);

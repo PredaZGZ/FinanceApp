@@ -121,7 +121,7 @@ export class MyInvestorService {
 
                     const price = Math.abs(movement.amount) / quantity;
 
-                    await tx.stockTrade.createMany({
+                    const result = await tx.stockTrade.createMany({
                         data: {
                             id: randomUUID(),
                             date: movement.dateOp,
@@ -140,13 +140,13 @@ export class MyInvestorService {
                         },
                         skipDuplicates: true,
                     });
-                    tradesCount++;
+                    tradesCount += result.count;
 
                 } else {
                     // Cash Transfer
                     const type = this.classifyTransferType(movement.concepto, movement.amount);
 
-                    await tx.cashTransfer.createMany({
+                    const result = await tx.cashTransfer.createMany({
                         data: {
                             id: randomUUID(),
                             date: movement.dateOp,
@@ -161,7 +161,7 @@ export class MyInvestorService {
                         },
                         skipDuplicates: true,
                     });
-                    transfersCount++;
+                    transfersCount += result.count;
                 }
             }
 

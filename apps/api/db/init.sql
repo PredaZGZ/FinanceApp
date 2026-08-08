@@ -122,8 +122,8 @@ CREATE TABLE IF NOT EXISTS import_history (
 );
 
 -- Unique Indexes
-CREATE UNIQUE INDEX IF NOT EXISTS stock_trades_unique_idx ON stock_trades (date, currency, symbol, side, quantity, price);
-CREATE UNIQUE INDEX IF NOT EXISTS cash_transfers_unique_idx ON cash_transfers (date, currency, type, value);
+CREATE UNIQUE INDEX IF NOT EXISTS stock_trades_unique_idx ON stock_trades ("userId", date, currency, symbol, side, quantity, price);
+CREATE UNIQUE INDEX IF NOT EXISTS cash_transfers_unique_idx ON cash_transfers ("userId", date, currency, type, value);
 
 -- Performance Indexes
 CREATE INDEX IF NOT EXISTS idx_stock_trades_user_id ON stock_trades("userId");

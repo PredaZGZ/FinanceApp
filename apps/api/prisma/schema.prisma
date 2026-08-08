@@ -51,7 +51,7 @@ model StockTrade {
   updatedAt  DateTime  @db.Timestamp(3)
   user       User?     @relation(fields: [userId], references: [id])
 
-  @@unique([date, currency, symbol, side, quantity, price])
+  @@unique([userId, date, currency, symbol, side, quantity, price])
   @@index([userId])
   @@map("stock_trades")
 }
@@ -73,7 +73,7 @@ model CashTransfer {
   updatedAt         DateTime @db.Timestamp(3)
   user              User?    @relation(fields: [userId], references: [id])
 
-  @@unique([date, currency, type, value])
+  @@unique([userId, date, currency, type, value])
   @@index([userId])
   @@map("cash_transfers")
 }

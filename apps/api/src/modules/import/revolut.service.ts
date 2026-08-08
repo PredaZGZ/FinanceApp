@@ -75,14 +75,15 @@ export class RevolutService {
         };
     }
 
-    async saveToDb(userId: string, data: RevolutStatement): Promise<void> {
-        await prisma.$transaction(async (tx) => {
+    async saveToDb(userId: string, data: RevolutStatement): Promise<number> {
+        return prisma.$transaction(async (tx) => {
+            let insertedCount = 0;
 
             for (const currencyData of data.currencies) {
                 // Stock Trades
                 if (currencyData.stockTrades) {
                     for (const trade of currencyData.stockTrades) {
-                        await tx.stockTrade.createMany({
+                        const result = await tx.stockTrade.createMany({
                             data: {
                                 id: randomUUID(),
                                 date: new Date(trade.date),
@@ -101,13 +102,14 @@ export class RevolutService {
                             },
                             skipDuplicates: true,
                         });
+                        insertedCount += result.count;
                     }
                 }
 
                 // Cash Transfers
                 if (currencyData.cashTransfers) {
                     for (const transfer of currencyData.cashTransfers) {
-                        await tx.cashTransfer.createMany({
+                        const result = await tx.cashTransfer.createMany({
                             data: {
                                 id: randomUUID(),
                                 date: new Date(transfer.date),
@@ -125,9 +127,11 @@ export class RevolutService {
                             },
                             skipDuplicates: true,
                         });
+                        insertedCount += result.count;
                     }
                 }
             }
+            return insertedCount;
 
         });
     }
