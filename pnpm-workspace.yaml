@@ -2,7 +2,9 @@ packages:
   - apps/web
   - apps/api
   - apps/electron-desktop
+  - apps/tauri-desktop
 
 
-ignoredBuiltDependencies:
+onlyBuiltDependencies:
+  - electron
   - esbuild

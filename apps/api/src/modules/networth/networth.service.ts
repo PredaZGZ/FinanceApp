@@ -320,12 +320,12 @@ export class NetWorthService {
 
         const summaryQuery = `
       WITH LatestValuations AS (
-          SELECT DISTINCT ON ("assetId") "assetId", value
+          SELECT DISTINCT ON ("assetId") "assetId", value, COALESCE(currency, 'EUR') AS currency
           FROM networth_asset_valuations
           ORDER BY "assetId", "valuedAt" DESC, "createdAt" DESC
       )
       SELECT 
-          COALESCE(SUM(v.value), 0) as "totalCurrentNetWorth",
+          COALESCE(SUM(v.value) FILTER (WHERE v.currency = 'EUR'), 0) as "totalCurrentNetWorth",
           COUNT(*) as "countActive"
       FROM networth_assets a
       LEFT JOIN LatestValuations v ON a.id = v."assetId"
@@ -336,24 +336,39 @@ export class NetWorthService {
 
         const breakdownQuery = `
       WITH LatestValuations AS (
-          SELECT DISTINCT ON ("assetId") "assetId", value
+          SELECT DISTINCT ON ("assetId") "assetId", value, COALESCE(currency, 'EUR') AS currency
           FROM networth_asset_valuations
           ORDER BY "assetId", "valuedAt" DESC, "createdAt" DESC
       )
       SELECT 
           a.category,
+          v.currency,
           COALESCE(SUM(v.value), 0) as "totalValue",
           COUNT(*) as count
       FROM networth_assets a
       LEFT JOIN LatestValuations v ON a.id = v."assetId"
       WHERE a."isSold" = FALSE AND a."userId" = $1
-      GROUP BY a.category
+      GROUP BY a.category, v.currency
     `;
 
-        const [summaryRes, soldRes, breakdownRes] = await Promise.all([
+        const totalsByCurrencyQuery = `
+          WITH LatestValuations AS (
+            SELECT DISTINCT ON ("assetId") "assetId", value, COALESCE(currency, 'EUR') AS currency
+            FROM networth_asset_valuations
+            ORDER BY "assetId", "valuedAt" DESC, "createdAt" DESC
+          )
+          SELECT v.currency, COALESCE(SUM(v.value), 0) AS value
+          FROM networth_assets a
+          JOIN LatestValuations v ON a.id = v."assetId"
+          WHERE a."isSold" = FALSE AND a."userId" = $1
+          GROUP BY v.currency
+        `;
+
+        const [summaryRes, soldRes, breakdownRes, totalsByCurrencyRes] = await Promise.all([
             pool.query(summaryQuery, [userId]),
             pool.query(countSoldQuery, [userId]),
-            pool.query(breakdownQuery, [userId])
+            pool.query(breakdownQuery, [userId]),
+            pool.query(totalsByCurrencyQuery, [userId])
         ]);
 
         const summary = summaryRes.rows[0];
@@ -363,8 +378,13 @@ export class NetWorthService {
             totalCurrentNetWorth: parseFloat(summary.totalCurrentNetWorth),
             countActive: parseInt(summary.countActive, 10),
             countSold: parseInt(sold.countSold, 10),
+            currency: 'EUR',
+            totalsByCurrency: Object.fromEntries(
+                totalsByCurrencyRes.rows.map(row => [row.currency, parseFloat(row.value)])
+            ),
             breakdownByCategory: breakdownRes.rows.map(row => ({
                 category: row.category || 'Uncategorized',
+                currency: row.currency || 'EUR',
                 totalValue: parseFloat(row.totalValue),
                 count: parseInt(row.count, 10)
             }))

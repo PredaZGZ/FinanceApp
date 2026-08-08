@@ -1,6 +1,4 @@
 import crypto from 'crypto';
-import fs from 'fs';
-import path from 'path';
 
 const ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH = 16;
@@ -19,7 +17,7 @@ const getKey = () => {
         throw new Error("ENCRYPTION_KEY is missing or invalid. Please run setup script.");
     }
 
-    if (keyHex.length !== 64) {
+    if (!/^[a-fA-F0-9]{64}$/.test(keyHex)) {
         throw new Error("ENCRYPTION_KEY must be a 32-byte hex string (64 chars).");
     }
 

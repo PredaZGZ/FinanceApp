@@ -31,6 +31,10 @@ export class PortfolioService {
                     remainingQuantity: trade.quantity
                 });
             } else if (trade.side === 'Sell') {
+                const available = buyQueue.reduce((sum, lot) => sum + lot.remainingQuantity, 0);
+                if (trade.quantity > available + 0.000001) {
+                    throw new Error(`Cannot sell ${trade.quantity} ${trade.symbol}; only ${available} available`);
+                }
                 let quantityToSell = trade.quantity;
 
                 // Net Proceeds = (Price * Quantity) - Fees - Commission
@@ -117,6 +121,9 @@ export class PortfolioService {
                     averageCost = totalCost / totalShares;
                 }
             } else if (trade.side === 'Sell') {
+                if (trade.quantity > totalShares + 0.000001) {
+                    throw new Error(`Cannot sell ${trade.quantity} ${trade.symbol}; only ${totalShares} available`);
+                }
                 const costOfSoldShares = trade.quantity * averageCost;
 
                 // Net Proceeds = (Price * Quantity) - Fees - Commission
@@ -170,54 +177,45 @@ export class PortfolioService {
         exchangeRates: { date: Date; rate: number; currency: string }[] = []
     ): CalculationResult[] {
         const results: CalculationResult[] = [];
-        const tradesBySymbol: Record<string, { native: StockTrade[], eur: StockTrade[] }> = {};
+        const tradesByPosition: Record<string, { native: StockTrade[], eur: StockTrade[], conversionComplete: boolean }> = {};
 
         for (const trade of trades) {
-            if (!tradesBySymbol[trade.symbol]) {
-                tradesBySymbol[trade.symbol] = { native: [], eur: [] };
+            const positionKey = `${trade.symbol}:${trade.currency}`;
+            if (!tradesByPosition[positionKey]) {
+                tradesByPosition[positionKey] = { native: [], eur: [], conversionComplete: true };
             }
 
             // 1. Native Trade (Original) - Just push as is
-            tradesBySymbol[trade.symbol].native.push(trade);
+            tradesByPosition[positionKey].native.push(trade);
 
             // 2. EUR Trade (Converted)
             let eurTrade = { ...trade };
-            let converted = false;
-
             if (trade.currency === 'EUR') {
-                converted = true; // Already EUR
             } else if (exchangeRates.length > 0) {
-                // Try conversion
                 const tradeDate = new Date(trade.date).getTime();
-                let applicableRate = exchangeRates[0]?.rate; // Default to first
-
-                for (const rateObj of exchangeRates) {
-                    if (rateObj.date.getTime() <= tradeDate) {
-                        applicableRate = rateObj.rate;
-                    } else {
-                        break;
-                    }
-                }
+                const applicableRate = exchangeRates
+                    .filter(rate => rate.currency === trade.currency && rate.date.getTime() <= tradeDate)
+                    .at(-1)?.rate;
 
                 if (applicableRate) {
-                    // Assuming rate is EUR/USD
                     eurTrade.price = trade.price * applicableRate;
                     eurTrade.fees = trade.fees * applicableRate;
                     eurTrade.commission = trade.commission * applicableRate;
                     eurTrade.currency = 'EUR';
-                    converted = true;
+                } else {
+                    tradesByPosition[positionKey].conversionComplete = false;
                 }
+            } else {
+                tradesByPosition[positionKey].conversionComplete = false;
             }
 
-            // If converted (or already EUR), push to eur list
-            // If not converted, we technically have a "mixed" or "incorrect" EUR list, 
-            // but for aggregation purposes we might just have to accept the raw value (1:1 error) or 0.
-            // Pushing it anyway ensures share counts match.
-            tradesBySymbol[trade.symbol].eur.push(eurTrade);
+            if (trade.currency === 'EUR' || eurTrade.currency === 'EUR') {
+                tradesByPosition[positionKey].eur.push(eurTrade);
+            }
         }
 
-        for (const symbol in tradesBySymbol) {
-            const { native, eur } = tradesBySymbol[symbol];
+        for (const positionKey in tradesByPosition) {
+            const { native, eur, conversionComplete } = tradesByPosition[positionKey];
 
             // Calculate Native (For Display)
             let nativeResult: CalculationResult;
@@ -228,20 +226,18 @@ export class PortfolioService {
             }
 
             // Calculate EUR (For Totals)
-            let eurResult: CalculationResult;
-            if (method === 'WeightedAverage') {
-                eurResult = this.calculateWeightedAverage(eur);
-            } else {
-                eurResult = this.calculateFIFO(eur);
-            }
+            const eurResult = conversionComplete
+                ? (method === 'WeightedAverage' ? this.calculateWeightedAverage(eur) : this.calculateFIFO(eur))
+                : null;
 
             results.push({
                 ...nativeResult,
                 // Ensure currency is set from Native result
                 currency: nativeResult.currency,
                 // Attach EUR totals
-                totalCostBasisEur: eurResult.totalCostBasis,
-                realizedGainEur: eurResult.realizedGain
+                totalCostBasisEur: eurResult?.totalCostBasis,
+                realizedGainEur: eurResult?.realizedGain,
+                conversionComplete,
             });
         }
 

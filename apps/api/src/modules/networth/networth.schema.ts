@@ -59,8 +59,8 @@ export const createValuationSchema = z.object({
 
 export const getAssetsSchema = z.object({
     query: z.object({
-        page: z.string().optional().transform((val) => (val ? parseInt(val, 10) : 1)),
-        limit: z.string().optional().transform((val) => (val ? parseInt(val, 10) : 50)),
+        page: z.coerce.number().int().min(1).default(1),
+        limit: z.coerce.number().int().min(1).max(100).default(50),
         sortBy: z.enum(['name', 'originalCost', 'currentValue', 'createdAt', 'updatedAt']).optional().default('createdAt'),
         sortOrder: z.enum(['asc', 'desc']).optional().default('desc'),
         q: z.string().optional(),
@@ -70,8 +70,8 @@ export const getAssetsSchema = z.object({
             if (val === 'false') return false;
             return undefined;
         }),
-        minValue: z.string().optional().transform((val) => (val ? parseFloat(val) : undefined)),
-        maxValue: z.string().optional().transform((val) => (val ? parseFloat(val) : undefined)),
+        minValue: z.coerce.number().finite().optional(),
+        maxValue: z.coerce.number().finite().optional(),
     }),
 });
 
@@ -80,10 +80,10 @@ export const getValuationsSchema = z.object({
         id: z.string().uuid(),
     }),
     query: z.object({
-        page: z.string().optional().transform((val) => (val ? parseInt(val, 10) : 1)),
-        limit: z.string().optional().transform((val) => (val ? parseInt(val, 10) : 50)),
-        from: z.string().optional(),
-        to: z.string().optional(),
+        page: z.coerce.number().int().min(1).default(1),
+        limit: z.coerce.number().int().min(1).max(100).default(50),
+        from: z.string().refine(value => !Number.isNaN(Date.parse(value)), 'Invalid date').optional(),
+        to: z.string().refine(value => !Number.isNaN(Date.parse(value)), 'Invalid date').optional(),
     }),
 });
 

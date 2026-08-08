@@ -29,7 +29,14 @@ export class TransactionsService {
         ]);
 
         return {
-            data: transactions,
+            data: transactions.map(transaction => ({
+                ...transaction,
+                quantity: Number(transaction.quantity),
+                price: Number(transaction.price),
+                value: Number(transaction.value),
+                fees: Number(transaction.fees),
+                commission: Number(transaction.commission),
+            })),
             meta: {
                 total: totalCount,
                 page,
@@ -49,13 +56,13 @@ export class TransactionsService {
         });
         return transfers.map(transfer => ({
             date: transfer.date,
-            rate: transfer.conversionRate!,
+            rate: Number(transfer.conversionRate),
             currency: transfer.currency,
         }));
     }
 
     async findPendingConversions(userId: string) {
-        return prisma.cashTransfer.findMany({
+        const transfers = await prisma.cashTransfer.findMany({
             where: {
                 userId,
                 type: { in: ['Cash top-up', 'Cash withdrawal', 'Deposit', 'Withdrawal'] },
@@ -66,6 +73,7 @@ export class TransactionsService {
             select: { id: true, date: true, currency: true, type: true, value: true },
             orderBy: { date: 'desc' },
         });
+        return transfers.map(transfer => ({ ...transfer, value: Number(transfer.value) }));
     }
 
     async updateTransactionConversion(userId: string, id: string, eurCost: number) {
@@ -77,7 +85,7 @@ export class TransactionsService {
             throw new Error('Transaction not found');
         }
 
-        const rate = eurCost / Math.abs(tx.value);
+        const rate = eurCost / Math.abs(Number(tx.value));
         await prisma.cashTransfer.update({
             where: { id },
             data: { eurCost, conversionRate: rate },

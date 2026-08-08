@@ -9,7 +9,7 @@ interface PortfolioSummaryCardsProps {
 }
 
 export function PortfolioSummaryCards({ summary, prices }: PortfolioSummaryCardsProps) {
-    const { totalRealizedGain, holdings } = summary;
+    const { totalRealizedGain, holdings, conversionComplete } = summary;
     const activeHoldingsCount = holdings.filter(h => h.remainingShares > 0).length;
 
     // Calculate Unrealized metrics
@@ -37,7 +37,7 @@ export function PortfolioSummaryCards({ summary, prices }: PortfolioSummaryCards
 
         // --- Cost Basis Calculation ---
         // Calculate cost in EUR
-        let costNative = holding.averageCost * holding.remainingShares;
+        const costNative = holding.averageCost * holding.remainingShares;
         let costEUR = costNative;
 
         if (holding.currency === 'USD') {
@@ -55,14 +55,16 @@ export function PortfolioSummaryCards({ summary, prices }: PortfolioSummaryCards
                     <CardTitle className="text-sm font-medium">
                         Total Realized Profit
                     </CardTitle>
-                    <TrendingUp className={`h-4 w-4 ${totalRealizedGain >= 0 ? 'text-green-500' : 'text-red-500'}`} />
+                    <TrendingUp className={`h-4 w-4 ${(totalRealizedGain ?? 0) >= 0 ? 'text-green-500' : 'text-red-500'}`} />
                 </CardHeader>
                 <CardContent>
-                    <div className={`text-2xl font-bold ${totalRealizedGain >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                        {totalRealizedGain >= 0 ? '+' : ''}€{totalRealizedGain.toFixed(2)}
+                    <div className={`text-2xl font-bold ${(totalRealizedGain ?? 0) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                        {conversionComplete && totalRealizedGain !== null
+                            ? `${totalRealizedGain >= 0 ? '+' : ''}€${totalRealizedGain.toFixed(2)}`
+                            : 'Unavailable'}
                     </div>
                     <p className="text-xs text-muted-foreground">
-                        Lifetime realized gains
+                        {conversionComplete ? 'Lifetime realized gains' : 'Missing historical exchange rates'}
                     </p>
                 </CardContent>
             </Card>

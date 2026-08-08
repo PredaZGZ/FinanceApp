@@ -1,0 +1,13 @@
+ALTER TABLE "stock_trades"
+    ALTER COLUMN "quantity" TYPE DECIMAL(20,8) USING "quantity"::DECIMAL(20,8),
+    ALTER COLUMN "price" TYPE DECIMAL(20,8) USING "price"::DECIMAL(20,8),
+    ALTER COLUMN "value" TYPE DECIMAL(20,8) USING "value"::DECIMAL(20,8),
+    ALTER COLUMN "fees" TYPE DECIMAL(20,8) USING "fees"::DECIMAL(20,8),
+    ALTER COLUMN "commission" TYPE DECIMAL(20,8) USING "commission"::DECIMAL(20,8);
+
+ALTER TABLE "cash_transfers"
+    ALTER COLUMN "value" TYPE DECIMAL(20,8) USING "value"::DECIMAL(20,8),
+    ALTER COLUMN "fees" TYPE DECIMAL(20,8) USING "fees"::DECIMAL(20,8),
+    ALTER COLUMN "commission" TYPE DECIMAL(20,8) USING "commission"::DECIMAL(20,8),
+    ALTER COLUMN "eurCost" TYPE DECIMAL(20,8) USING "eurCost"::DECIMAL(20,8),
+    ALTER COLUMN "conversionRate" TYPE DECIMAL(20,8) USING "conversionRate"::DECIMAL(20,8);

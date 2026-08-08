@@ -28,5 +28,6 @@ export interface CalculationResult {
     totalCostBasis: number;   // Total value of held shares at cost
     realizedGainEur?: number; // Converted for aggregation
     totalCostBasisEur?: number; // Converted for aggregation
+    conversionComplete?: boolean;
     breakdown?: TradeMatch[];  // (FIFO only) Which buy matched which sell
 }

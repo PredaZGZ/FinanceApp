@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
 import { salaryService } from './salary.service';
-import { createSalaryRecordSchema, getSalaryRecordsQuerySchema, breakdownItemSchema } from './salary.schema';
+import { createSalaryRecordSchema, getSalaryRecordsQuerySchema } from './salary.schema';
 import fs from 'fs';
 import { salaryPasswordService } from '../salary-password/salary-password.service';
-import { encrypt, decrypt } from '../../common/utils/encryption';
+import { decrypt } from '../../common/utils/encryption';
 import { standardFontDataUrl } from '../../common/utils/pdf';
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 
@@ -16,6 +16,7 @@ export class SalaryController {
                 try {
                     breakdown = JSON.parse(req.body.breakdown);
                 } catch (e) {
+                    if (req.file?.path && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
                     return res.status(400).json({ error: 'Invalid breakdown format' });
                 }
             }
@@ -30,6 +31,7 @@ export class SalaryController {
 
             const parseResult = createSalaryRecordSchema.safeParse(body);
             if (!parseResult.success) {
+                if (req.file?.path && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
                 return res.status(400).json({ error: parseResult.error });
             }
 
@@ -38,6 +40,7 @@ export class SalaryController {
             res.header('Content-Type', 'application/json; charset=utf-8');
             res.status(201).json(result);
         } catch (error) {
+            if (req.file?.path && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
             console.error(error);
             res.status(500).json({ error: 'Internal Server Error' });
         }
@@ -93,6 +96,7 @@ export class SalaryController {
                 try {
                     breakdown = typeof req.body.breakdown === 'string' ? JSON.parse(req.body.breakdown) : req.body.breakdown;
                 } catch (e) {
+                    if (req.file?.path && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
                     return res.status(400).json({ error: 'Invalid breakdown format' });
                 }
             }
@@ -107,6 +111,7 @@ export class SalaryController {
 
             const parseResult = createSalaryRecordSchema.safeParse(body);
             if (!parseResult.success) {
+                if (req.file?.path && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
                 return res.status(400).json({ error: parseResult.error });
             }
 
@@ -120,6 +125,7 @@ export class SalaryController {
             res.header('Content-Type', 'application/json; charset=utf-8');
             res.json(result);
         } catch (error) {
+            if (req.file?.path && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
             console.error(error);
             res.status(500).json({ error: 'Internal Server Error' });
         }
@@ -179,7 +185,7 @@ export class SalaryController {
 
                     console.log('DEBUG: Unlocked with saved password');
                     res.header('Content-Type', 'application/json; charset=utf-8');
-                    return res.json({ isLocked: false, password: plain });
+                    return res.json({ isLocked: false, usesSavedPassword: true });
                 } catch (e) {
                     // Wrong password
                 }

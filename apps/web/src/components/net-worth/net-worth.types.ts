@@ -32,6 +32,7 @@ export interface Trend {
 
 export interface CategoryBreakdown {
     category: string;
+    currency: string;
     totalValue: number;
     count: number;
 }
@@ -47,7 +48,8 @@ export interface NetWorthSummary {
     totalLiabilities?: number;
     change24h?: number;
     change24hPercent?: number;
-    currency?: string; // Backend isn't returning this yet!
+    currency?: string;
+    totalsByCurrency: Record<string, number>;
 }
 
 export interface CreateAssetRequest {

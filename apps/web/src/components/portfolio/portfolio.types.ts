@@ -14,13 +14,15 @@ export interface Holding {
     remainingShares: number;
     totalCostBasis: number;
     averageCost: number;
+    conversionComplete?: boolean;
     breakdown?: BreakdownItem[];
 }
 
 export interface PortfolioSummary {
     currency: string;
     method: string;
-    totalRealizedGain: number;
-    totalCostBasis: number;
+    totalRealizedGain: number | null;
+    totalCostBasis: number | null;
+    conversionComplete: boolean;
     holdings: Holding[];
 }

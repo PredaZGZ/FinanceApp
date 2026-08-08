@@ -2,10 +2,10 @@ import { z } from 'zod';
 
 export const getTransactionsSchema = z.object({
     query: z.object({
-        page: z.string().optional().transform((val) => (val ? parseInt(val, 10) : 1)),
-        limit: z.string().optional().transform((val) => (val ? parseInt(val, 10) : 50)),
-        from: z.string().optional(),
-        to: z.string().optional(),
+        page: z.coerce.number().int().min(1).default(1),
+        limit: z.coerce.number().int().min(1).max(100).default(50),
+        from: z.string().refine(value => !Number.isNaN(Date.parse(value)), 'Invalid date').optional(),
+        to: z.string().refine(value => !Number.isNaN(Date.parse(value)), 'Invalid date').optional(),
         currency: z.enum(['EUR', 'USD']).optional(),
         symbol: z.string().optional(),
         type: z.string().optional(),

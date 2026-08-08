@@ -1,5 +1,10 @@
 /// <reference types="vite/client" />
 
+declare module '*?asset' {
+    const source: string
+    export default source
+}
+
 interface Window {
     electron: {
         ipcRenderer: {
