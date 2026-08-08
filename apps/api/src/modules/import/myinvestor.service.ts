@@ -1,4 +1,6 @@
-import pool from '../../common/db/client';
+import { Currency, TradeSide } from '../../generated/prisma/enums';
+import { prisma } from '../../common/db/prisma';
+import { randomUUID } from 'node:crypto';
 
 interface Order {
     date: Date;
@@ -19,9 +21,7 @@ interface Movement {
 
 export class MyInvestorService {
     async processFiles(userId: string, movementsBuffer: Buffer, ordersBuffer?: Buffer): Promise<{ tradesCount: number, transfersCount: number }> {
-        const client = await pool.connect();
-        try {
-            await client.query('BEGIN');
+        return prisma.$transaction(async (tx) => {
 
             // 1. Load Orders
             let orders: Order[] = [];
@@ -121,55 +121,52 @@ export class MyInvestorService {
 
                     const price = Math.abs(movement.amount) / quantity;
 
-                    await client.query(
-                        `INSERT INTO stock_trades (id, date, currency, symbol, type, quantity, price, side, value, fees, commission, source, "updatedAt", "userId")
-                         VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'myinvestor_movements', NOW(), $11)
-                         ON CONFLICT (date, currency, symbol, side, quantity, price) DO NOTHING`,
-                        [
-                            movement.dateOp,
-                            movement.currency,
+                    await tx.stockTrade.createMany({
+                        data: {
+                            id: randomUUID(),
+                            date: movement.dateOp,
+                            currency: movement.currency as Currency,
                             symbol,
-                            'Fund',
+                            type: 'Fund',
                             quantity,
                             price,
-                            tradeSide,
-                            Math.abs(movement.amount),
-                            0, 0,
-                            userId
-                        ]
-                    );
+                            side: tradeSide as TradeSide,
+                            value: Math.abs(movement.amount),
+                            fees: 0,
+                            commission: 0,
+                            source: 'myinvestor_movements',
+                            userId,
+                            updatedAt: new Date(),
+                        },
+                        skipDuplicates: true,
+                    });
                     tradesCount++;
 
                 } else {
                     // Cash Transfer
                     const type = this.classifyTransferType(movement.concepto, movement.amount);
 
-                    await client.query(
-                        `INSERT INTO cash_transfers (id, date, currency, type, value, fees, commission, "eurCost", "conversionRate", "skippedConversion", source, "updatedAt", "userId")
-                         VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, 'myinvestor_movements', NOW(), $10)
-                         ON CONFLICT (date, currency, type, value) DO NOTHING`,
-                        [
-                            movement.dateOp,
-                            movement.currency,
+                    await tx.cashTransfer.createMany({
+                        data: {
+                            id: randomUUID(),
+                            date: movement.dateOp,
+                            currency: movement.currency as Currency,
                             type,
-                            Math.abs(movement.amount),
-                            0, 0, null, null, false,
-                            userId
-                        ]
-                    );
+                            value: Math.abs(movement.amount),
+                            fees: 0,
+                            commission: 0,
+                            source: 'myinvestor_movements',
+                            userId,
+                            updatedAt: new Date(),
+                        },
+                        skipDuplicates: true,
+                    });
                     transfersCount++;
                 }
             }
 
-            await client.query('COMMIT');
             return { tradesCount, transfersCount };
-
-        } catch (error) {
-            await client.query('ROLLBACK');
-            throw error;
-        } finally {
-            client.release();
-        }
+        });
     }
 
     private parseEuroNumber(str: string): number {

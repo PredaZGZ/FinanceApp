@@ -1,5 +1,7 @@
 import type { RevolutStatement, CurrencyData, StockTrade, CashTransfer, PortfolioItem, AccountSummary } from '../../common/types/revolut.js';
-import pool from '../../common/db/client';
+import { Currency as PrismaCurrency, TradeSide } from '../../generated/prisma/enums';
+import { prisma } from '../../common/db/prisma';
+import { randomUUID } from 'node:crypto';
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { standardFontDataUrl } from '../../common/utils/pdf';
 
@@ -74,66 +76,60 @@ export class RevolutService {
     }
 
     async saveToDb(userId: string, data: RevolutStatement): Promise<void> {
-        const client = await pool.connect();
-        try {
-            await client.query('BEGIN');
+        await prisma.$transaction(async (tx) => {
 
             for (const currencyData of data.currencies) {
                 // Stock Trades
                 if (currencyData.stockTrades) {
                     for (const trade of currencyData.stockTrades) {
-                        await client.query(
-                            `INSERT INTO stock_trades (id, date, currency, symbol, type, quantity, price, side, value, fees, commission, source, "updatedAt", "userId")
-                             VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'revolut_statement', NOW(), $11)
-                             ON CONFLICT (date, currency, symbol, side, quantity, price) DO NOTHING`,
-                            [
-                                new Date(trade.date),
-                                trade.currency,
-                                trade.symbol,
-                                trade.type,
-                                trade.quantity,
-                                trade.price,
-                                trade.side,
-                                trade.value,
-                                trade.fees,
-                                trade.commission,
-                                userId
-                            ]
-                        );
+                        await tx.stockTrade.createMany({
+                            data: {
+                                id: randomUUID(),
+                                date: new Date(trade.date),
+                                currency: trade.currency as PrismaCurrency,
+                                symbol: trade.symbol,
+                                type: trade.type,
+                                quantity: trade.quantity,
+                                price: trade.price,
+                                side: trade.side as TradeSide,
+                                value: trade.value,
+                                fees: trade.fees,
+                                commission: trade.commission,
+                                source: 'revolut_statement',
+                                userId,
+                                updatedAt: new Date(),
+                            },
+                            skipDuplicates: true,
+                        });
                     }
                 }
 
                 // Cash Transfers
                 if (currencyData.cashTransfers) {
                     for (const transfer of currencyData.cashTransfers) {
-                        await client.query(
-                            `INSERT INTO cash_transfers (id, date, currency, type, value, fees, commission, "eurCost", "conversionRate", "skippedConversion", source, "updatedAt", "userId")
-                             VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, 'revolut_statement', NOW(), $10)
-                             ON CONFLICT (date, currency, type, value) DO NOTHING`,
-                            [
-                                new Date(transfer.date),
-                                transfer.currency,
-                                transfer.type,
-                                transfer.value,
-                                transfer.fees,
-                                transfer.commission,
-                                transfer.eurCost || null,
-                                transfer.conversionRate || null,
-                                transfer.skippedConversion || false,
-                                userId
-                            ]
-                        );
+                        await tx.cashTransfer.createMany({
+                            data: {
+                                id: randomUUID(),
+                                date: new Date(transfer.date),
+                                currency: transfer.currency as PrismaCurrency,
+                                type: transfer.type,
+                                value: transfer.value,
+                                fees: transfer.fees,
+                                commission: transfer.commission,
+                                eurCost: transfer.eurCost || null,
+                                conversionRate: transfer.conversionRate || null,
+                                skippedConversion: transfer.skippedConversion || false,
+                                source: 'revolut_statement',
+                                userId,
+                                updatedAt: new Date(),
+                            },
+                            skipDuplicates: true,
+                        });
                     }
                 }
             }
 
-            await client.query('COMMIT');
-        } catch (error) {
-            await client.query('ROLLBACK');
-            throw error;
-        } finally {
-            client.release();
-        }
+        });
     }
 
     private parseAccountInfo(text: string) {
