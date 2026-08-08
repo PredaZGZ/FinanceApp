@@ -21,6 +21,13 @@ model User {
   id                 String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   email              String              @unique @db.VarChar(255)
   passwordHash       String              @map("password_hash") @db.VarChar(255)
+  name               String?             @db.VarChar(100)
+  avatarIcon         String              @default("user-round") @db.VarChar(32)
+  avatarColor        String              @default("slate") @db.VarChar(24)
+  locale             String              @default("es-ES") @db.VarChar(10)
+  timezone           String              @default("Europe/Madrid") @db.VarChar(64)
+  preferredCurrency  Currency            @default(EUR)
+  sessionVersion     Int                 @default(0)
   createdAt          DateTime            @default(now()) @db.Timestamptz(6)
   updatedAt          DateTime            @default(now()) @updatedAt @db.Timestamptz(6)
   stockTrades        StockTrade[]
