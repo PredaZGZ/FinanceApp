@@ -37,7 +37,7 @@ export function ProjectDialog({ open, onOpenChange, onSubmit }: ProjectDialogPro
             await onSubmit({ name: name.trim(), description: description.trim() || undefined });
             handleOpenChange(false);
         } catch (submitError) {
-            setError(submitError instanceof Error ? submitError.message : 'No se pudo crear el proyecto');
+            setError(submitError instanceof Error ? submitError.message : 'Project could not be created');
         } finally {
             setIsSaving(false);
         }
@@ -47,22 +47,22 @@ export function ProjectDialog({ open, onOpenChange, onSubmit }: ProjectDialogPro
         <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogContent className="sm:max-w-[480px]">
                 <DialogHeader>
-                    <DialogTitle>Nuevo proyecto</DialogTitle>
-                    <DialogDescription>Crea un espacio separado para controlar sus ingresos y gastos.</DialogDescription>
+                    <DialogTitle>New project</DialogTitle>
+                    <DialogDescription>Create a separate space to track its income and expenses.</DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
-                        <Label htmlFor="project-name">Nombre</Label>
-                        <Input id="project-name" value={name} onChange={(event) => setName(event.target.value)} maxLength={120} autoFocus required placeholder="Reforma de vivienda" />
+                        <Label htmlFor="project-name">Name</Label>
+                        <Input id="project-name" value={name} onChange={(event) => setName(event.target.value)} maxLength={120} autoFocus required placeholder="Home renovation" />
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="project-description">Descripción</Label>
-                        <Textarea id="project-description" value={description} onChange={(event) => setDescription(event.target.value)} maxLength={500} placeholder="Objetivo, alcance o notas del proyecto" />
+                        <Label htmlFor="project-description">Description</Label>
+                        <Textarea id="project-description" value={description} onChange={(event) => setDescription(event.target.value)} maxLength={500} placeholder="Goal, scope, or project notes" />
                     </div>
                     {error && <p className="text-sm text-destructive">{error}</p>}
                     <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>Cancelar</Button>
-                        <Button type="submit" disabled={isSaving || !name.trim()}>{isSaving ? 'Creando…' : 'Crear proyecto'}</Button>
+                        <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>Cancel</Button>
+                        <Button type="submit" disabled={isSaving || !name.trim()}>{isSaving ? 'Creating...' : 'Create project'}</Button>
                     </DialogFooter>
                 </form>
             </DialogContent>
