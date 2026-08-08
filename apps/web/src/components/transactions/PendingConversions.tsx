@@ -41,6 +41,7 @@ export default function PendingConversions() {
     };
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- initial remote data synchronization
         loadPending();
     }, []);
 

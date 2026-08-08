@@ -48,7 +48,7 @@ interface AssetDialogProps {
 
 export function AssetDialog({ open, onOpenChange, asset, onSubmit }: AssetDialogProps) {
     const form = useForm<AssetFormValues>({
-        resolver: zodResolver(assetSchema as any),
+        resolver: zodResolver(assetSchema),
         defaultValues: {
             name: "",
             description: "",

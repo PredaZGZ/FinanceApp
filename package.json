@@ -1,17 +1,24 @@
 {
   "name": "FinanceApp",
   "version": "1.0.0",
-  "description": "",
+  "description": "Private personal finance tracker",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "turbo dev",
-    "build": "turbo build && ./move-appimage.sh",
-    "lint": "turbo lint"
+    "test": "pnpm --filter api test",
+    "dev": "pnpm --parallel --filter api --filter web dev",
+    "dev:web": "pnpm --filter web dev",
+    "dev:api": "pnpm --filter api dev",
+    "dev:electron": "pnpm --parallel --filter api --filter web --filter electron-desktop dev",
+    "dev:tauri": "pnpm --parallel --filter api --filter tauri-desktop dev",
+    "build": "turbo build --filter=api --filter=web",
+    "build:electron": "turbo build --filter=electron-desktop...",
+    "build:tauri": "turbo build --filter=tauri-desktop...",
+    "lint": "turbo lint",
+    "check": "pnpm lint && pnpm test && pnpm build"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "UNLICENSED",
   "packageManager": "pnpm@10.26.0",
   "private": true,
   "workspaces": [

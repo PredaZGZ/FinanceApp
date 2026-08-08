@@ -9,6 +9,7 @@
     "prebuild": "prisma generate",
     "build": "tsc",
     "start": "node dist/index.js",
+    "test": "tsx --test src/**/*.test.ts",
     "import:revolut": "tsx src/scripts/import-revolut.ts",
     "import:myinvestor": "tsx src/scripts/import-myinvestor.ts",
     "verify:myinvestor": "tsx src/scripts/verify-myinvestor.ts",
@@ -16,7 +17,8 @@
     "db:seed": "tsx src/scripts/seed.ts",
     "prisma:generate": "prisma generate",
     "prisma:validate": "prisma validate",
-    "prisma:format": "prisma format"
+    "prisma:format": "prisma format",
+    "db:migrate": "prisma migrate deploy"
   },
   "keywords": [],
   "author": "",
@@ -34,7 +36,7 @@
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.0.2",
     "pdf-lib": "^1.17.1",
-    "pdfjs-dist": "^5.4.530",
+    "pdfjs-dist": "^6.2.108",
     "pg": "^8.16.3",
     "yahoo-finance2": "^3.12.0",
     "zod": "^4.2.1"

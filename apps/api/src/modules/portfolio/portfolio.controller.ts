@@ -13,6 +13,9 @@ export class PortfolioController {
             if (!symbol) {
                 return reqRes.status(400).json({ error: 'Symbol is required' });
             }
+            if (method !== 'FIFO' && method !== 'WeightedAverage') {
+                return reqRes.status(400).json({ error: 'Unsupported calculation method' });
+            }
 
             // Fetch all trades for this symbol, regardless of currency
             const tradesResult = await transactionsService.getTransactions(userId, {
@@ -52,6 +55,12 @@ export class PortfolioController {
         try {
             const { method = 'FIFO', currency = 'EUR' } = req.query; // Default to EUR for unified view
             const userId = req.user!.id;
+            if (method !== 'FIFO' && method !== 'WeightedAverage') {
+                return reqRes.status(400).json({ error: 'Unsupported calculation method' });
+            }
+            if (currency !== 'EUR' && currency !== 'USD') {
+                return reqRes.status(400).json({ error: 'Unsupported target currency' });
+            }
 
             // Fetch all trades (mixed currencies)
             const tradesResult = await transactionsService.getTransactions(userId, {
@@ -83,8 +92,13 @@ export class PortfolioController {
 
             // Aggregate totals
             // Aggregate totals using the EUR converted values
-            const totalRealizedGain = results.reduce((sum, item) => sum + (item.realizedGainEur || 0), 0);
-            const totalCostBasis = results.reduce((sum, item) => sum + (item.totalCostBasisEur || 0), 0);
+            const conversionComplete = results.every(item => item.conversionComplete !== false);
+            const totalRealizedGain = conversionComplete
+                ? results.reduce((sum, item) => sum + (item.realizedGainEur ?? 0), 0)
+                : null;
+            const totalCostBasis = conversionComplete
+                ? results.reduce((sum, item) => sum + (item.totalCostBasisEur ?? 0), 0)
+                : null;
 
 
 
@@ -93,6 +107,7 @@ export class PortfolioController {
                 method,
                 totalRealizedGain,
                 totalCostBasis,
+                conversionComplete,
                 holdings: results
                     .filter(r => r.remainingShares > 0 || r.realizedGain !== 0)
                     .map(({ breakdown, ...rest }) => rest) // Exclude breakdown from summary to reduce payload size

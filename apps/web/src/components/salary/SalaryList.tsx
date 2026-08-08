@@ -40,6 +40,7 @@ export default function SalaryList({ refreshTrigger, onView, onEdit }: SalaryLis
     };
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- initial remote data synchronization
         fetchSalaries();
     }, [refreshTrigger]);
 

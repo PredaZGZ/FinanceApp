@@ -42,18 +42,16 @@ interface ReportData {
     transactions: TransactionsResponse;
 }
 
-const currencyFormatter = new Intl.NumberFormat("es-ES", {
-    style: "currency",
-    currency: "EUR",
-    maximumFractionDigits: 2,
-});
-
 const numberFormatter = new Intl.NumberFormat("es-ES", {
     maximumFractionDigits: 2,
 });
 
-function formatCurrency(value: number | null | undefined) {
-    return currencyFormatter.format(value ?? 0);
+function formatCurrency(value: number | null | undefined, currency = "EUR") {
+    return new Intl.NumberFormat("es-ES", {
+        style: "currency",
+        currency,
+        maximumFractionDigits: 2,
+    }).format(value ?? 0);
 }
 
 function formatDate(value: string) {
@@ -146,6 +144,7 @@ export default function ReportsPage() {
     }, []);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- initial remote data synchronization
         loadReports();
     }, [loadReports]);
 
@@ -163,8 +162,11 @@ export default function ReportsPage() {
         };
     }, [data]);
 
-    const categoryTotal = useMemo(() => {
-        return data?.netWorth.breakdownByCategory.reduce((total, item) => total + item.totalValue, 0) ?? 0;
+    const categoryTotals = useMemo(() => {
+        return data?.netWorth.breakdownByCategory.reduce<Record<string, number>>((totals, item) => {
+            totals[item.currency] = (totals[item.currency] ?? 0) + item.totalValue;
+            return totals;
+        }, {}) ?? {};
     }, [data]);
 
     const holdings = useMemo(() => {
@@ -214,16 +216,16 @@ export default function ReportsPage() {
                 />
                 <MetricCard
                     title="Capital invertido"
-                    value={formatCurrency(data.portfolio.totalCostBasis)}
+                    value={data.portfolio.totalCostBasis === null ? "No disponible" : formatCurrency(data.portfolio.totalCostBasis)}
                     description={`${holdings.length} posiciones abiertas`}
                     icon={PieChart}
                 />
                 <MetricCard
                     title="Beneficio realizado"
-                    value={formatCurrency(data.portfolio.totalRealizedGain)}
+                    value={data.portfolio.totalRealizedGain === null ? "No disponible" : formatCurrency(data.portfolio.totalRealizedGain)}
                     description="Acumulado de operaciones cerradas"
                     icon={TrendingUp}
-                    valueClassName={data.portfolio.totalRealizedGain >= 0 ? "text-emerald-600" : "text-red-600"}
+                    valueClassName={(data.portfolio.totalRealizedGain ?? 0) >= 0 ? "text-emerald-600" : "text-red-600"}
                 />
                 <MetricCard
                     title="Nómina neta anual"
@@ -256,12 +258,13 @@ export default function ReportsPage() {
                                     .slice()
                                     .sort((left, right) => right.totalValue - left.totalValue)
                                     .map((item) => {
+                                        const categoryTotal = categoryTotals[item.currency] ?? 0;
                                         const percentage = categoryTotal > 0 ? (item.totalValue / categoryTotal) * 100 : 0;
                                         return (
-                                            <div key={item.category} className="space-y-2">
+                                            <div key={`${item.category}-${item.currency}`} className="space-y-2">
                                                 <div className="flex items-center justify-between text-sm">
                                                     <span className="font-medium">{item.category}</span>
-                                                    <span className="text-muted-foreground">{formatCurrency(item.totalValue)}</span>
+                                                    <span className="text-muted-foreground">{formatCurrency(item.totalValue, item.currency)}</span>
                                                 </div>
                                                 <div className="h-2 overflow-hidden rounded-full bg-muted">
                                                     <div className="h-full rounded-full bg-primary" style={{ width: `${percentage}%` }} />
@@ -294,8 +297,9 @@ export default function ReportsPage() {
                                 </TableHeader>
                                 <TableBody>
                                     {holdings.slice(0, 8).map((holding) => {
-                                        const weight = data.portfolio.totalCostBasis > 0
-                                            ? (holding.totalCostBasis / data.portfolio.totalCostBasis) * 100
+                                        const portfolioCostBasis = data.portfolio.totalCostBasis;
+                                        const weight = portfolioCostBasis !== null && portfolioCostBasis > 0
+                                            ? (holding.totalCostBasis / portfolioCostBasis) * 100
                                             : 0;
                                         return (
                                             <TableRow key={`${holding.symbol}-${holding.currency}`}>

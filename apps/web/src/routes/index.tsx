@@ -1,22 +1,25 @@
 import { createBrowserRouter, RouterProvider, Navigate, Outlet } from "react-router-dom";
+import { lazy, Suspense, type ReactNode } from "react";
 import AuthLayout from "@/layouts/AuthLayout";
 import MainLayout from "@/layouts/MainLayout";
-import LoginPage from "@/pages/auth/LoginPage";
-import SignUpPage from "@/pages/auth/SignUpPage";
-import DashboardPage from "@/pages/dashboard/DashboardPage";
-import PortfolioPage from "@/pages/portfolio/PortfolioPage";
-import PortfolioAnalysisPage from "@/pages/portfolio/PortfolioAnalysisPage";
-
-import ImportPage from "@/pages/import-data/ImportPage";
-import NetWorthPage from "@/pages/net-worth/NetWorthPage";
-import SalaryPage from "@/pages/salary/SalaryPage";
-import ReportsPage from "@/pages/reports/ReportsPage";
-import ProjectsPage from "@/pages/projects/ProjectsPage";
-import AccountSettingsPage from "@/pages/settings/AccountSettingsPage";
-import SupportPage from "@/pages/support/SupportPage";
 import { transactionsRoutes } from "./transactions.routes";
 import { AuthProvider } from "@/components/common/AuthContext";
 import ProtectedRoute from "@/components/common/ProtectedRoute";
+
+const LoginPage = lazy(() => import("@/pages/auth/LoginPage"));
+const SignUpPage = lazy(() => import("@/pages/auth/SignUpPage"));
+const DashboardPage = lazy(() => import("@/pages/dashboard/DashboardPage"));
+const PortfolioPage = lazy(() => import("@/pages/portfolio/PortfolioPage"));
+const PortfolioAnalysisPage = lazy(() => import("@/pages/portfolio/PortfolioAnalysisPage"));
+const ImportPage = lazy(() => import("@/pages/import-data/ImportPage"));
+const NetWorthPage = lazy(() => import("@/pages/net-worth/NetWorthPage"));
+const SalaryPage = lazy(() => import("@/pages/salary/SalaryPage"));
+const ReportsPage = lazy(() => import("@/pages/reports/ReportsPage"));
+const ProjectsPage = lazy(() => import("@/pages/projects/ProjectsPage"));
+const AccountSettingsPage = lazy(() => import("@/pages/settings/AccountSettingsPage"));
+const SupportPage = lazy(() => import("@/pages/support/SupportPage"));
+
+const deferred = (page: ReactNode) => <Suspense fallback={null}>{page}</Suspense>;
 
 const router = createBrowserRouter([
   {
@@ -31,11 +34,11 @@ const router = createBrowserRouter([
         children: [
           {
             path: "/login",
-            element: <LoginPage />,
+            element: deferred(<LoginPage />),
           },
           {
             path: "/register",
-            element: <SignUpPage />,
+            element: deferred(<SignUpPage />),
           },
         ],
       },
@@ -48,35 +51,35 @@ const router = createBrowserRouter([
             children: [
               {
                 path: "",
-                element: <DashboardPage />,
+                element: deferred(<DashboardPage />),
               },
               {
                 path: "networth",
-                element: <NetWorthPage />,
+                element: deferred(<NetWorthPage />),
               },
               {
                 path: "import",
-                element: <ImportPage />,
+                element: deferred(<ImportPage />),
               },
               {
                 path: "salary",
-                element: <SalaryPage />,
+                element: deferred(<SalaryPage />),
               },
               {
                 path: "reports",
-                element: <ReportsPage />,
+                element: deferred(<ReportsPage />),
               },
               {
                 path: "projects",
-                element: <ProjectsPage />,
+                element: deferred(<ProjectsPage />),
               },
               {
                 path: "settings",
-                element: <AccountSettingsPage />,
+                element: deferred(<AccountSettingsPage />),
               },
               {
                 path: "support",
-                element: <SupportPage />,
+                element: deferred(<SupportPage />),
               },
               ...transactionsRoutes,
               {
@@ -84,11 +87,11 @@ const router = createBrowserRouter([
                 children: [
                   {
                     path: "",
-                    element: <PortfolioPage />,
+                    element: deferred(<PortfolioPage />),
                   },
                   {
                     path: ":symbol",
-                    element: <PortfolioAnalysisPage />,
+                    element: deferred(<PortfolioAnalysisPage />),
                   }
                 ]
               },

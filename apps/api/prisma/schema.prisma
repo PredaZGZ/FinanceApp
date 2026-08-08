@@ -83,12 +83,12 @@ model StockTrade {
   currency   Currency
   symbol     String
   type       String    @default("Trade - Market")
-  quantity   Float
-  price      Float
+  quantity   Decimal   @db.Decimal(20, 8)
+  price      Decimal   @db.Decimal(20, 8)
   side       TradeSide
-  value      Float
-  fees       Float
-  commission Float
+  value      Decimal   @db.Decimal(20, 8)
+  fees       Decimal   @db.Decimal(20, 8)
+  commission Decimal   @db.Decimal(20, 8)
   source     String?
   userId     String?   @db.Uuid
   createdAt  DateTime  @default(now()) @db.Timestamp(3)
@@ -105,11 +105,11 @@ model CashTransfer {
   date              DateTime @db.Timestamp(3)
   currency          Currency
   type              String
-  value             Float
-  fees              Float
-  commission        Float
-  eurCost           Float?
-  conversionRate    Float?
+  value             Decimal  @db.Decimal(20, 8)
+  fees              Decimal  @db.Decimal(20, 8)
+  commission        Decimal  @db.Decimal(20, 8)
+  eurCost           Decimal? @db.Decimal(20, 8)
+  conversionRate    Decimal? @db.Decimal(20, 8)
   skippedConversion Boolean  @default(false)
   source            String?
   userId            String?  @db.Uuid

@@ -82,7 +82,12 @@ export function NetWorthSummaryCard({ summary, isLoading }: NetWorthSummaryCardP
                     <CardTitle className="text-sm font-medium">Total Value</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">{formatCurrency(totalAssets, currency)}</div>
+                    <div className="space-y-1 text-lg font-bold">
+                        {Object.entries(summary.totalsByCurrency).map(([code, value]) => (
+                            <div key={code}>{formatCurrency(value, code)}</div>
+                        ))}
+                        {Object.keys(summary.totalsByCurrency).length === 0 && formatCurrency(totalAssets, currency)}
+                    </div>
                 </CardContent>
             </Card>
         </div>
