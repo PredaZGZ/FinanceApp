@@ -4,8 +4,11 @@ import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 import { prisma } from '../../common/db/prisma';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-change-me';
-const PEPPER = process.env.PEPPER || 'default-pepper-ChangeMeInProduction!';
+const requiredSecret = (name: 'JWT_SECRET' | 'PEPPER') => {
+    const value = process.env[name];
+    if (!value) throw new Error(`${name} is not configured`);
+    return value;
+};
 
 export const registerSchema = z.object({
     email: z.string().email(),
@@ -33,7 +36,7 @@ export class AuthService {
         // Hash with Argon2 and Pepper
         const passwordHash = await argon2.hash(password, {
             type: argon2.argon2id,
-            secret: Buffer.from(PEPPER)
+            secret: Buffer.from(requiredSecret('PEPPER'))
         });
 
         const user = await prisma.user.create({
@@ -56,7 +59,7 @@ export class AuthService {
         // Verify with Argon2 and Pepper
         try {
             const match = await argon2.verify(user.passwordHash, password, {
-                secret: Buffer.from(PEPPER)
+                secret: Buffer.from(requiredSecret('PEPPER'))
             });
 
             if (!match) {
@@ -90,7 +93,7 @@ export class AuthService {
     private generateToken(userId: string) {
         // In a real high-security app, we would use HttpOnly cookies instead of returning the token in body.
         // For now, we return it, but the client should ideally store it securely.
-        return jwt.sign({ userId }, JWT_SECRET, { expiresIn: '7d' });
+        return jwt.sign({ userId }, requiredSecret('JWT_SECRET'), { expiresIn: '7d' });
     }
 }
 

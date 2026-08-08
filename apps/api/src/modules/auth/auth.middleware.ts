@@ -1,8 +1,11 @@
 
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
+import jwt, { type JwtPayload, type VerifyErrors } from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-change-me';
+const getJwtSecret = () => {
+    if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET is not configured');
+    return process.env.JWT_SECRET;
+};
 
 export interface AuthRequest extends Request {
     user?: {
@@ -19,13 +22,17 @@ export const authenticateToken = (req: AuthRequest, res: Response, next: NextFun
         return;
     }
 
-    jwt.verify(token, JWT_SECRET, (err: any, user: any) => {
+    jwt.verify(token, getJwtSecret(), (err: VerifyErrors | null, user: JwtPayload | string | undefined) => {
         if (err) {
             res.sendStatus(403);
             return;
         }
 
-        const payload = user as { userId: string };
+        const payload = user as JwtPayload & { userId?: string };
+        if (!payload.userId) {
+            res.sendStatus(403);
+            return;
+        }
         req.user = { id: payload.userId };
         next();
     });

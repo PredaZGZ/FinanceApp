@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
 const TOKEN_KEY = 'auth_token';
 
@@ -33,10 +33,12 @@ export async function fetchAPI<T>(endpoint: string, options?: RequestInit): Prom
     });
 
     if (!response.ok) {
-        throw new Error(`API Error: ${response.statusText}`);
+        const payload = await response.json().catch(() => null) as { error?: string } | null;
+        throw new Error(payload?.error || `API Error: ${response.status} ${response.statusText}`);
     }
 
-    return response.json();
+    if (response.status === 204) return undefined as T;
+    return response.json() as Promise<T>;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -64,4 +66,3 @@ export async function fetchPrices(symbols: string[]): Promise<Record<string, { p
         `/prices/batch?symbols=${encodeURIComponent(query)}`
     );
 }
-

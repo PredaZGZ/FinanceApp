@@ -5,7 +5,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { postAPI, setToken } from "@/lib/api";
-import { useAuth } from "@/components/common/AuthContext";
+import { useAuth } from "@/components/common/auth-context";
 import { Lock, Mail, TrendingUp, ArrowRight } from "lucide-react";
 
 export default function LoginPage() {

@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "@/components/common/AuthContext";
+import { useAuth } from "@/components/common/auth-context";
 import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard,
