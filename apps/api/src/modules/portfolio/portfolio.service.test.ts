@@ -15,15 +15,26 @@ const trade = (overrides: Partial<StockTrade>): StockTrade => ({
     ...overrides,
 });
 
-test('keeps positions with the same symbol separate by currency', () => {
+test('combines a position when buys and sells use different currencies', () => {
     const service = new PortfolioService();
     const results = service.calculatePortfolioSummary([
         trade({ currency: 'EUR' }),
         trade({ currency: 'USD', price: 20 }),
     ], 'FIFO', 'EUR', [{ date: new Date('2024-12-31T00:00:00Z'), rate: 0.9, currency: 'USD' }]);
 
-    assert.equal(results.length, 2);
-    assert.deepEqual(results.map(result => result.currency).sort(), ['EUR', 'USD']);
+    assert.equal(results.length, 1);
+    assert.equal(results[0].symbol, 'ACME');
+    assert.equal(results[0].remainingShares, 2);
+});
+
+test('processes buys before sells when timestamps are equal', () => {
+    const service = new PortfolioService();
+    const result = service.calculateFIFO([
+        trade({ date: new Date('2025-01-02T00:00:00Z'), side: 'Sell' }),
+        trade({ date: new Date('2025-01-02T00:00:00Z'), side: 'Buy' }),
+    ]);
+
+    assert.equal(result.remainingShares, 0);
 });
 
 test('marks EUR totals unavailable when no historical rate exists', () => {

@@ -3,11 +3,15 @@ import { CalculationResult, StockTrade, TradeMatch } from './portfolio.types';
 export class PortfolioService {
     /**
      * Calculates the cost basis and realized gains using FIFO method.
-     * Assumes trades are for a single symbol and same currency.
+     * Assumes trades are for a single symbol. Currency is the price currency,
+     * not a separate holding: the same asset may be bought in USD and sold in EUR.
      */
     calculateFIFO(trades: StockTrade[]): CalculationResult {
         // Sort trades by date ascending
-        const sortedTrades = [...trades].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        const sortedTrades = [...trades].sort((a, b) =>
+            new Date(a.date).getTime() - new Date(b.date).getTime()
+            || (a.side === 'Buy' ? -1 : 1) - (b.side === 'Buy' ? -1 : 1)
+        );
 
         // Queue of buy lots. We store the original trade plus the calculated cost per share for that lot.
         interface BuyLot extends StockTrade {
@@ -101,7 +105,10 @@ export class PortfolioService {
      */
     calculateWeightedAverage(trades: StockTrade[]): CalculationResult {
         // Sort trades by date ascending
-        const sortedTrades = [...trades].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        const sortedTrades = [...trades].sort((a, b) =>
+            new Date(a.date).getTime() - new Date(b.date).getTime()
+            || (a.side === 'Buy' ? -1 : 1) - (b.side === 'Buy' ? -1 : 1)
+        );
 
         let totalShares = 0;
         let totalCost = 0;
@@ -180,7 +187,9 @@ export class PortfolioService {
         const tradesByPosition: Record<string, { native: StockTrade[], eur: StockTrade[], conversionComplete: boolean }> = {};
 
         for (const trade of trades) {
-            const positionKey = `${trade.symbol}:${trade.currency}`;
+            // A position is identified by its asset. The transaction currency
+            // can change between operations (for example, buy in USD and sell in EUR).
+            const positionKey = trade.symbol;
             if (!tradesByPosition[positionKey]) {
                 tradesByPosition[positionKey] = { native: [], eur: [], conversionComplete: true };
             }
@@ -217,13 +226,38 @@ export class PortfolioService {
         for (const positionKey in tradesByPosition) {
             const { native, eur, conversionComplete } = tradesByPosition[positionKey];
 
-            // Calculate Native (For Display)
-            let nativeResult: CalculationResult;
-            if (method === 'WeightedAverage') {
-                nativeResult = this.calculateWeightedAverage(native);
-            } else {
-                nativeResult = this.calculateFIFO(native);
-            }
+            // Calculate each native currency independently so mixed-currency
+            // transactions never compare prices from different currencies.
+            const nativeCurrencies = new Set(native.map(trade => trade.currency));
+            const nativeByCurrency = nativeCurrencies.size === 1
+                ? [method === 'WeightedAverage'
+                    ? this.calculateWeightedAverage(native)
+                    : this.calculateFIFO(native)]
+                : [];
+
+            const nativeResult: CalculationResult = nativeCurrencies.size === 1
+                ? {
+                    ...nativeByCurrency[0],
+                    breakdown: nativeByCurrency[0].breakdown ?? [],
+                }
+                : {
+                    // A position can be traded in multiple currencies. Keep the
+                    // share count visible, but do not invent a monetary total
+                    // by adding USD and EUR cost bases together.
+                    symbol: native[0]?.symbol || '',
+                    currency: targetCurrency,
+                    realizedGain: 0,
+                    remainingShares: native.reduce(
+                        (sum, trade) => sum + (trade.side === 'Buy' ? trade.quantity : -trade.quantity),
+                        0
+                    ),
+                    totalCostBasis: 0,
+                    averageCost: 0,
+                    breakdown: [],
+                };
+            nativeResult.averageCost = nativeResult.remainingShares > 0
+                ? nativeResult.totalCostBasis / nativeResult.remainingShares
+                : 0;
 
             // Calculate EUR (For Totals)
             const eurResult = conversionComplete
