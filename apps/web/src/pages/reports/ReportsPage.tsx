@@ -42,6 +42,39 @@ interface ReportData {
     transactions: TransactionsResponse;
 }
 
+type ReportSection = keyof ReportData;
+
+const emptyNetWorth: NetWorthSummary = {
+    totalCurrentNetWorth: 0,
+    countActive: 0,
+    countSold: 0,
+    breakdownByCategory: [],
+    totalsByCurrency: {},
+};
+
+const emptyPortfolio: PortfolioSummary = {
+    currency: "EUR",
+    method: "FIFO",
+    totalRealizedGain: null,
+    totalCostBasis: null,
+    conversionComplete: true,
+    holdings: [],
+};
+
+const emptySalaries: SalaryListResponse = {
+    data: [],
+    meta: {
+        total: 0,
+        page: 1,
+        limit: 100,
+        totalPages: 0,
+    },
+};
+
+const emptyTransactions: TransactionsResponse = {
+    data: [],
+};
+
 const numberFormatter = new Intl.NumberFormat("es-ES", {
     maximumFractionDigits: 2,
 });
@@ -123,24 +156,54 @@ export default function ReportsPage() {
     const [data, setData] = useState<ReportData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [sectionErrors, setSectionErrors] = useState<Partial<Record<ReportSection, string>>>({});
 
     const loadReports = useCallback(async () => {
         setIsLoading(true);
-        try {
-            const [netWorth, portfolio, salaries, transactions] = await Promise.all([
-                fetchAPI<NetWorthSummary>("/networth/summary"),
-                fetchAPI<PortfolioSummary>("/portfolio/summary?method=FIFO"),
-                fetchAPI<SalaryListResponse>("/salary?page=1&limit=100"),
-                fetchAPI<TransactionsResponse>("/transactions?page=1&limit=8"),
-            ]);
-            setData({ netWorth, portfolio, salaries, transactions });
-            setError(null);
-        } catch (loadError) {
-            console.error("Failed to load reports", loadError);
-            setError("No se han podido cargar los informes.");
-        } finally {
-            setIsLoading(false);
-        }
+        const requests = {
+            netWorth: fetchAPI<NetWorthSummary>("/networth/summary"),
+            portfolio: fetchAPI<PortfolioSummary>("/portfolio/summary?method=FIFO"),
+            salaries: fetchAPI<SalaryListResponse>("/salary?page=1&limit=100"),
+            transactions: fetchAPI<TransactionsResponse>("/transactions?page=1&limit=8"),
+        } satisfies Record<ReportSection, Promise<unknown>>;
+
+        const entries = await Promise.all(
+            Object.entries(requests).map(async ([section, request]) => {
+                try {
+                    return [section, { status: "fulfilled", value: await request }] as const;
+                } catch (loadError) {
+                    console.error(`Failed to load reports section: ${section}`, loadError);
+                    return [
+                        section,
+                        {
+                            status: "rejected",
+                            reason: loadError instanceof Error ? loadError.message : "Error desconocido",
+                        },
+                    ] as const;
+                }
+            })
+        );
+
+        const results = Object.fromEntries(entries) as Record<
+            ReportSection,
+            | { status: "fulfilled"; value: unknown }
+            | { status: "rejected"; reason: string }
+        >;
+        const nextSectionErrors = Object.fromEntries(
+            Object.entries(results)
+                .filter(([, result]) => result.status === "rejected")
+                .map(([section, result]) => [section, result.status === "rejected" ? result.reason : ""])
+        ) as Partial<Record<ReportSection, string>>;
+
+        setData({
+            netWorth: results.netWorth.status === "fulfilled" ? results.netWorth.value as NetWorthSummary : emptyNetWorth,
+            portfolio: results.portfolio.status === "fulfilled" ? results.portfolio.value as PortfolioSummary : emptyPortfolio,
+            salaries: results.salaries.status === "fulfilled" ? results.salaries.value as SalaryListResponse : emptySalaries,
+            transactions: results.transactions.status === "fulfilled" ? results.transactions.value as TransactionsResponse : emptyTransactions,
+        });
+        setSectionErrors(nextSectionErrors);
+        setError(Object.keys(nextSectionErrors).length === 4 ? "No se han podido cargar los informes." : null);
+        setIsLoading(false);
     }, []);
 
     useEffect(() => {
@@ -206,6 +269,14 @@ export default function ReportsPage() {
                     Actualizar
                 </Button>
             </div>
+
+            {Object.keys(sectionErrors).length > 0 && (
+                <Card className="border-amber-200 bg-amber-50 text-amber-950">
+                    <CardContent className="p-4 text-sm">
+                        Algunos bloques no han podido actualizarse ahora mismo. El resto del informe sigue disponible.
+                    </CardContent>
+                </Card>
+            )}
 
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                 <MetricCard

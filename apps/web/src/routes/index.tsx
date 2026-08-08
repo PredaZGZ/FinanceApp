@@ -5,6 +5,7 @@ import MainLayout from "@/layouts/MainLayout";
 import { transactionsRoutes } from "./transactions.routes";
 import { AuthProvider } from "@/components/common/AuthContext";
 import ProtectedRoute from "@/components/common/ProtectedRoute";
+import RouteErrorBoundary from "@/components/common/RouteErrorBoundary";
 
 const LoginPage = lazy(() => import("@/pages/auth/LoginPage"));
 const SignUpPage = lazy(() => import("@/pages/auth/SignUpPage"));
@@ -28,6 +29,7 @@ const router = createBrowserRouter([
         <Outlet />
       </AuthProvider>
     ),
+    errorElement: <RouteErrorBoundary />,
     children: [
       {
         element: <AuthLayout />,
