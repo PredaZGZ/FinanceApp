@@ -185,8 +185,11 @@ export class MyInvestorService {
 
     private parseEuroNumber(str: string): number {
         if (!str) return 0;
-        const cleanStr = str.replace(' EUR', '').replace(/\./g, '').replace(',', '.');
-        return parseFloat(cleanStr);
+        const cleanStr = str.replace(' EUR', '').trim();
+        const normalized = cleanStr.includes(',')
+            ? cleanStr.replace(/\./g, '').replace(',', '.')
+            : cleanStr;
+        return parseFloat(normalized);
     }
 
     private parseDate(str: string): Date {
