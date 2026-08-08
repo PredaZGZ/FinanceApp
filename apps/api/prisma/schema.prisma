@@ -1,0 +1,179 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Currency {
+  EUR
+  USD
+}
+
+enum TradeSide {
+  Buy
+  Sell
+}
+
+model User {
+  id                 String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email              String              @unique @db.VarChar(255)
+  passwordHash       String              @map("password_hash") @db.VarChar(255)
+  createdAt          DateTime            @default(now()) @db.Timestamptz(6)
+  updatedAt          DateTime            @default(now()) @updatedAt @db.Timestamptz(6)
+  stockTrades        StockTrade[]
+  cashTransfers      CashTransfer[]
+  netWorthAssets     NetWorthAsset[]
+  salaryRecords      SalaryRecord[]
+  importHistory      ImportHistory[]
+  salaryPdfPasswords SalaryPdfPassword[]
+
+  @@map("users")
+}
+
+model StockTrade {
+  id         String    @id
+  date       DateTime  @db.Timestamp(3)
+  currency   Currency
+  symbol     String
+  type       String    @default("Trade - Market")
+  quantity   Float
+  price      Float
+  side       TradeSide
+  value      Float
+  fees       Float
+  commission Float
+  source     String?
+  userId     String?   @db.Uuid
+  createdAt  DateTime  @default(now()) @db.Timestamp(3)
+  updatedAt  DateTime  @db.Timestamp(3)
+  user       User?     @relation(fields: [userId], references: [id])
+
+  @@unique([date, currency, symbol, side, quantity, price])
+  @@index([userId])
+  @@map("stock_trades")
+}
+
+model CashTransfer {
+  id                String   @id
+  date              DateTime @db.Timestamp(3)
+  currency          Currency
+  type              String
+  value             Float
+  fees              Float
+  commission        Float
+  eurCost           Float?
+  conversionRate    Float?
+  skippedConversion Boolean  @default(false)
+  source            String?
+  userId            String?  @db.Uuid
+  createdAt         DateTime @default(now()) @db.Timestamp(3)
+  updatedAt         DateTime @db.Timestamp(3)
+  user              User?    @relation(fields: [userId], references: [id])
+
+  @@unique([date, currency, type, value])
+  @@index([userId])
+  @@map("cash_transfers")
+}
+
+model NetWorthAsset {
+  id               String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name             String
+  description      String?
+  category         String?
+  isSold           Boolean                  @default(false)
+  soldAt           DateTime?                @db.Timestamptz(6)
+  originalCost     Decimal                  @db.Decimal
+  originalCurrency String?
+  notes            String?
+  userId           String?                  @db.Uuid
+  createdAt        DateTime                 @default(now()) @db.Timestamptz(6)
+  updatedAt        DateTime                 @default(now()) @updatedAt @db.Timestamptz(6)
+  user             User?                    @relation(fields: [userId], references: [id])
+  valuations       NetWorthAssetValuation[]
+
+  @@index([userId])
+  @@index([category])
+  @@index([isSold])
+  @@map("networth_assets")
+}
+
+model NetWorthAssetValuation {
+  id        String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  assetId   String        @db.Uuid
+  valuedAt  DateTime      @default(now()) @db.Timestamptz(6)
+  value     Decimal       @db.Decimal
+  currency  String?
+  source    String?
+  createdAt DateTime      @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime      @default(now()) @updatedAt @db.Timestamptz(6)
+  asset     NetWorthAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@index([assetId])
+  @@index([valuedAt])
+  @@map("networth_asset_valuations")
+}
+
+model SalaryRecord {
+  id             String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  date           DateTime?             @db.Timestamptz(6)
+  grossSalary    Decimal?              @db.Decimal
+  netSalary      Decimal?              @db.Decimal
+  company        String?
+  fileName       String?
+  fileStorageKey String?
+  notes          String?
+  userId         String?               @db.Uuid
+  createdAt      DateTime              @default(now()) @db.Timestamptz(6)
+  updatedAt      DateTime              @default(now()) @updatedAt @db.Timestamptz(6)
+  user           User?                 @relation(fields: [userId], references: [id])
+  breakdown      SalaryBreakdownItem[]
+
+  @@index([userId])
+  @@index([date])
+  @@map("salary_records")
+}
+
+model SalaryBreakdownItem {
+  id        String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  salaryId  String       @db.Uuid
+  concept   String
+  amount    Decimal      @db.Decimal
+  type      String
+  createdAt DateTime     @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime     @default(now()) @updatedAt @db.Timestamptz(6)
+  salary    SalaryRecord @relation(fields: [salaryId], references: [id], onDelete: Cascade)
+
+  @@index([salaryId])
+  @@map("salary_breakdown_items")
+}
+
+model ImportHistory {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  source           String
+  filename         String
+  status           String
+  recordsProcessed Int      @default(0)
+  createdAt        DateTime @default(now()) @db.Timestamptz(6)
+  userId           String?  @db.Uuid
+  user             User?    @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@map("import_history")
+}
+
+model SalaryPdfPassword {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId            String   @db.Uuid
+  encryptedPassword String
+  iv                String
+  label             String?
+  createdAt         DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt         DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("salary_pdf_passwords")
+}

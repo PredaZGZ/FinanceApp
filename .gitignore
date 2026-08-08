@@ -45,6 +45,8 @@ Thumbs.db
 # Environment
 .env
 .env.*
+!.env.example
+!apps/api/.env.example
 
 # Turbo
 .turbo
@@ -56,6 +58,9 @@ OUTPUT.md
 
 # uploads
 uploads/
+
+# Prisma generated client
+apps/api/src/generated/
 
 # electron-desktop
 out/

@@ -6,19 +6,25 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon --watch src -e ts,js,json --exec \"tsx src/index.ts\"",
+    "prebuild": "prisma generate",
     "build": "tsc",
     "start": "node dist/index.js",
     "import:revolut": "tsx src/scripts/import-revolut.ts",
     "import:myinvestor": "tsx src/scripts/import-myinvestor.ts",
     "verify:myinvestor": "tsx src/scripts/verify-myinvestor.ts",
     "add:conversion": "tsx src/scripts/add-conversion-rates.ts",
-    "db:seed": "tsx src/scripts/seed.ts"
+    "db:seed": "tsx src/scripts/seed.ts",
+    "prisma:generate": "prisma generate",
+    "prisma:validate": "prisma validate",
+    "prisma:format": "prisma format"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "packageManager": "pnpm@10.22.0",
   "dependencies": {
+    "@prisma/adapter-pg": "7.9.1",
+    "@prisma/client": "7.9.1",
     "argon2": "^0.44.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
@@ -42,7 +48,9 @@
     "@types/multer": "^2.0.0",
     "@types/node": "^24.10.1",
     "@types/pg": "^8.10.9",
+    "dotenv": "17.2.3",
     "nodemon": "^3.1.11",
+    "prisma": "7.9.1",
     "tsx": "^4.20.6",
     "typescript": "~5.9.3"
   },
