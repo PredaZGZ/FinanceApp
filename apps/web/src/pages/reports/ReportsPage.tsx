@@ -15,6 +15,11 @@ import {
 import type { NetWorthSummary } from "@/components/net-worth/net-worth.types";
 import type { PortfolioSummary } from "@/components/portfolio/portfolio.types";
 import type { SalaryListResponse } from "@/components/salary/salary.types";
+import {
+    AssetAllocationChart,
+    PortfolioExposureChart,
+    SalaryTrendChart,
+} from "@/components/reports/ReportCharts";
 
 interface Transaction {
     id: string;
@@ -226,6 +231,15 @@ export default function ReportsPage() {
                     description={`${salaryMetrics.count} nóminas en ${new Date().getFullYear()}`}
                     icon={Banknote}
                 />
+            </div>
+
+            <div className="grid gap-6 lg:grid-cols-2">
+                <AssetAllocationChart categories={data.netWorth.breakdownByCategory} />
+                <PortfolioExposureChart holdings={data.portfolio.holdings} />
+            </div>
+
+            <div className="grid gap-6 lg:grid-cols-2">
+                <SalaryTrendChart salaries={data.salaries.data} />
             </div>
 
             <div className="grid gap-6 lg:grid-cols-2">
