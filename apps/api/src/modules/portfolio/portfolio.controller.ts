@@ -83,8 +83,13 @@ export class PortfolioController {
 
             // Aggregate totals
             // Aggregate totals using the EUR converted values
-            const totalRealizedGain = results.reduce((sum, item) => sum + (item.realizedGainEur || 0), 0);
-            const totalCostBasis = results.reduce((sum, item) => sum + (item.totalCostBasisEur || 0), 0);
+            const conversionComplete = results.every(item => item.conversionComplete !== false);
+            const totalRealizedGain = conversionComplete
+                ? results.reduce((sum, item) => sum + (item.realizedGainEur ?? 0), 0)
+                : null;
+            const totalCostBasis = conversionComplete
+                ? results.reduce((sum, item) => sum + (item.totalCostBasisEur ?? 0), 0)
+                : null;
 
 
 
@@ -93,6 +98,7 @@ export class PortfolioController {
                 method,
                 totalRealizedGain,
                 totalCostBasis,
+                conversionComplete,
                 holdings: results
                     .filter(r => r.remainingShares > 0 || r.realizedGain !== 0)
                     .map(({ breakdown, ...rest }) => rest) // Exclude breakdown from summary to reduce payload size

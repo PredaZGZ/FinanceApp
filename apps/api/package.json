@@ -9,6 +9,7 @@
     "prebuild": "prisma generate",
     "build": "tsc",
     "start": "node dist/index.js",
+    "test": "tsx --test src/**/*.test.ts",
     "import:revolut": "tsx src/scripts/import-revolut.ts",
     "import:myinvestor": "tsx src/scripts/import-myinvestor.ts",
     "verify:myinvestor": "tsx src/scripts/verify-myinvestor.ts",
