@@ -11,7 +11,7 @@ import { convertPdfToImage } from "@/lib/pdfUtils";
 import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 GlobalWorkerOptions.workerSrc = pdfWorker;
 
-import type { CreateSalaryInput, SalaryRecord } from "./salary.types";
+import type { BreakdownItem, CreateSalaryInput, SalaryRecord } from "./salary.types";
 import { postAPI, fetchAPI } from "@/lib/api";
 // fetchAPI handles API_URL internally.
 import { Card, CardContent } from "@/components/ui/card";
@@ -31,6 +31,16 @@ interface SalaryFormProps {
     initialData?: SalaryRecord;
 }
 
+const errorMessage = (error: unknown, fallback: string) => error instanceof Error ? error.message : fallback;
+
+const isBreakdownItem = (value: unknown): value is BreakdownItem => {
+    if (!value || typeof value !== 'object') return false;
+    const item = value as Record<string, unknown>;
+    return typeof item.concept === 'string'
+        && typeof item.amount === 'number'
+        && (item.type === 'payment' || item.type === 'deduction');
+};
+
 export default function SalaryForm({ onSuccess, onCancel, initialData }: SalaryFormProps) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -42,7 +52,7 @@ export default function SalaryForm({ onSuccess, onCancel, initialData }: SalaryF
         notes: initialData?.notes || "",
         breakdown: (() => {
             if (!initialData?.breakdown) return [];
-            let bd = initialData.breakdown;
+            let bd: unknown = initialData.breakdown;
             if (typeof bd === 'string') {
                 try {
                     bd = JSON.parse(bd);
@@ -51,7 +61,7 @@ export default function SalaryForm({ onSuccess, onCancel, initialData }: SalaryF
                 }
             }
             if (Array.isArray(bd)) {
-                return bd.map((b: any) => ({
+                return bd.filter(isBreakdownItem).map((b) => ({
                     concept: b.concept,
                     amount: b.amount,
                     type: b.type
@@ -118,8 +128,9 @@ export default function SalaryForm({ onSuccess, onCancel, initialData }: SalaryF
             setFormData(prev => ({ ...prev, pdfPassword: manualPassword }));
             setIsLocked(false);
             setManualPassword("");
-        } catch (e: any) {
-            if (e.name === 'PasswordException' || e.code === 1) {
+        } catch (error: unknown) {
+            const pdfError = error as { name?: string; code?: number };
+            if (pdfError.name === 'PasswordException' || pdfError.code === 1) {
                 setUnlockError("Incorrect password");
             } else {
                 setUnlockError("Failed to open PDF");
@@ -201,20 +212,13 @@ Output ONLY valid JSON in this exact format:
 
             const mimeType = file.type === 'application/pdf' ? 'image/png' : file.type;
 
-            const blobPromise = new Promise<Blob>(async (resolve, reject) => {
-                try {
-                    let b: Blob | null = null;
-                    if (file.type === 'application/pdf') {
-                        b = await convertPdfToImage(file, formData.pdfPassword);
-                    } else {
-                        b = file;
-                    }
-                    if (b) resolve(b);
-                    else reject(new Error("Image generation failed"));
-                } catch (err) {
-                    reject(err);
-                }
-            });
+            const blobPromise = (async (): Promise<Blob> => {
+                const blob = file.type === 'application/pdf'
+                    ? await convertPdfToImage(file, formData.pdfPassword)
+                    : file;
+                if (!blob) throw new Error("Image generation failed");
+                return blob;
+            })();
 
             const item = new ClipboardItem({ [mimeType]: blobPromise });
             await navigator.clipboard.write([item]);
@@ -222,9 +226,9 @@ Output ONLY valid JSON in this exact format:
             setImageCopied(true);
             setTimeout(() => setImageCopied(false), 2000);
 
-        } catch (err: any) {
-            console.error(err);
-            setError("Failed to copy: " + (err.message || "Unknown error"));
+        } catch (error: unknown) {
+            console.error(error);
+            setError("Failed to copy: " + errorMessage(error, "Unknown error"));
         } finally {
             setIsConverting(false);
         }
@@ -251,7 +255,7 @@ Output ONLY valid JSON in this exact format:
             } else {
                 throw new Error("JSON structure likely incorrect");
             }
-        } catch (jsonErr) {
+        } catch {
             setError("Content is not valid Salary JSON.");
             return false;
         }
@@ -311,9 +315,9 @@ Output ONLY valid JSON in this exact format:
             }
 
             onSuccess();
-        } catch (err: any) {
-            console.error(err);
-            setError(err.message || "Failed to save salary record. Please try again.");
+        } catch (error: unknown) {
+            console.error(error);
+            setError(errorMessage(error, "Failed to save salary record. Please try again."));
         } finally {
             setLoading(false);
         }

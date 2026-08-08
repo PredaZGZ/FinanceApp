@@ -37,7 +37,7 @@ export function PortfolioSummaryCards({ summary, prices }: PortfolioSummaryCards
 
         // --- Cost Basis Calculation ---
         // Calculate cost in EUR
-        let costNative = holding.averageCost * holding.remainingShares;
+        const costNative = holding.averageCost * holding.remainingShares;
         let costEUR = costNative;
 
         if (holding.currency === 'USD') {

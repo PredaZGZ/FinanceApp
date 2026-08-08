@@ -40,7 +40,7 @@ interface ValuationDialogProps {
 
 export function ValuationDialog({ open, onOpenChange, asset, onSubmit }: ValuationDialogProps) {
     const form = useForm<ValuationFormValues>({
-        resolver: zodResolver(valuationSchema as any),
+        resolver: zodResolver(valuationSchema),
         defaultValues: {
             value: 0,
             currency: "EUR",

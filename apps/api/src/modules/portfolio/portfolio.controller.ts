@@ -13,6 +13,9 @@ export class PortfolioController {
             if (!symbol) {
                 return reqRes.status(400).json({ error: 'Symbol is required' });
             }
+            if (method !== 'FIFO' && method !== 'WeightedAverage') {
+                return reqRes.status(400).json({ error: 'Unsupported calculation method' });
+            }
 
             // Fetch all trades for this symbol, regardless of currency
             const tradesResult = await transactionsService.getTransactions(userId, {
@@ -52,6 +55,12 @@ export class PortfolioController {
         try {
             const { method = 'FIFO', currency = 'EUR' } = req.query; // Default to EUR for unified view
             const userId = req.user!.id;
+            if (method !== 'FIFO' && method !== 'WeightedAverage') {
+                return reqRes.status(400).json({ error: 'Unsupported calculation method' });
+            }
+            if (currency !== 'EUR' && currency !== 'USD') {
+                return reqRes.status(400).json({ error: 'Unsupported target currency' });
+            }
 
             // Fetch all trades (mixed currencies)
             const tradesResult = await transactionsService.getTransactions(userId, {
