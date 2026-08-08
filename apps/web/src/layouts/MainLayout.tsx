@@ -1,10 +1,7 @@
-import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "@/components/common/auth-context";
+import { Outlet, Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard,
-  LogOut,
-  Settings,
   Menu,
   X,
   PieChart,
@@ -17,11 +14,9 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { UserAvatar } from "@/components/common/UserAvatar";
+import { AccountMenu } from "@/components/common/AccountMenu";
 
 export default function MainLayout() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
 
@@ -33,8 +28,11 @@ export default function MainLayout() {
     { icon: PieChart, label: "Reports", path: "/reports" },
     { icon: Banknote, label: "Salaries", path: "/salary" },
     { icon: Upload, label: "Import Data", path: "/import" },
-    { icon: Settings, label: "Settings", path: "/settings" },
   ];
+  const pageTitles: Record<string, string> = {
+    "/settings": "Account settings",
+    "/support": "Help & support",
+  };
 
   return (
     <div className="h-screen w-full bg-background text-foreground flex overflow-hidden">
@@ -92,18 +90,8 @@ export default function MainLayout() {
           })}
         </nav>
 
-        <div className="p-4 border-t border-sidebar-border">
-          <Button
-            variant="ghost"
-            className="w-full gap-2 text-sidebar-foreground/70 hover:text-destructive hover:bg-destructive/10 justify-start"
-            onClick={async () => {
-              await logout();
-              navigate("/login");
-            }}
-          >
-            <LogOut className="h-4 w-4" />
-            Logout
-          </Button>
+        <div className="p-3 border-t border-sidebar-border">
+          <AccountMenu onNavigate={() => setIsMobileMenuOpen(false)} />
         </div>
       </aside>
 
@@ -120,12 +108,10 @@ export default function MainLayout() {
               <Menu className="h-5 w-5" />
             </Button>
             <h1 className="text-xl font-semibold tracking-tight">
-              {navItems.find(i => i.path === location.pathname)?.label || "Dashboard"}
+              {navItems.find(i => i.path === location.pathname)?.label || pageTitles[location.pathname] || "Dashboard"}
             </h1>
           </div>
-          <div className="flex items-center gap-4">
-            <UserAvatar user={user} className="h-8 w-8 rounded-full" iconClassName="h-4 w-4" />
-          </div>
+          <div />
         </header>
 
         <div className="flex-1 flex flex-col overflow-y-auto">
