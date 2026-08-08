@@ -297,7 +297,7 @@ export class RevolutService {
                 }
             } else if (transactionText.includes('Trade - Market') || transactionText.includes('Trade - Limit')) {
                 // Regex to capture Symbol (potentially merged), Type (Market/Limit), Quantity, Price, Side, Value, Fees, Commission
-                const tradeMatch = transactionText.match(/([A-Z0-9]{3,5})\s*(Trade - (?:Market|Limit))\s*([\d.]+)\s*(?:€|US\$)([\d,.]+)\s*(Buy|Sell)\s*(?:€|US\$)([\d,.]+)\s*(?:€|US\$)([\d,.]+)\s*(?:€|US\$)([\d,.]+)/);
+                const tradeMatch = transactionText.match(/([A-Z0-9]{2,5})\s*(Trade - (?:Market|Limit))\s*([\d.]+)\s*(?:€|US\$)([\d,.]+)\s*(Buy|Sell)\s*(?:€|US\$)([\d,.]+)\s*(?:€|US\$)([\d,.]+)\s*(?:€|US\$)([\d,.]+)/);
 
                 if (tradeMatch) {
                     const side = tradeMatch[5] === 'Sell' ? 'Sell' : 'Buy';
@@ -319,7 +319,7 @@ export class RevolutService {
             } else if (transactionText.includes('Dividend')) {
                 // Regex for Dividend: SymbolDividendValueTax?Comm?
                 // Example: AAPLDividendUS$0.05US$0US$0
-                const dividendMatch = transactionText.match(/([A-Z0-9]{3,5})Dividend\s*(?:€|US\$)([\d,.]+)\s*(?:€|US\$)([\d,.]+)\s*(?:€|US\$)([\d,.]+)/);
+                const dividendMatch = transactionText.match(/([A-Z0-9]{2,5})\s*Dividend\s*(?:€|US\$)([\d,.]+)\s*(?:€|US\$)([\d,.]+)\s*(?:€|US\$)([\d,.]+)/);
 
                 if (dividendMatch) {
                     cashTransfers.push({
