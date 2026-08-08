@@ -21,5 +21,18 @@ export const createDiskUploader = (subDir: string) => {
         },
     });
 
-    return multer({ storage: storage });
+    return multer({
+        storage,
+        limits: { fileSize: 10 * 1024 * 1024, files: 1 },
+        fileFilter: (_req, file, cb) => {
+            const allowedMimeTypes = new Set(['application/pdf', 'image/jpeg', 'image/png']);
+            const allowedExtensions = new Set(['.pdf', '.jpg', '.jpeg', '.png']);
+            const extension = path.extname(file.originalname).toLowerCase();
+            if (!allowedMimeTypes.has(file.mimetype.toLowerCase()) || !allowedExtensions.has(extension)) {
+                cb(new Error('Only PDF, JPEG, and PNG documents are allowed'));
+                return;
+            }
+            cb(null, true);
+        },
+    });
 };

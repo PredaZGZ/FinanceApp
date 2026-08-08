@@ -85,18 +85,13 @@ export default function SalaryForm({ onSuccess, onCancel, initialData }: SalaryF
             // Try to use fetchAPI helper if it supports FormData
             // If fetchAPI forces JSON content-type, we might need raw fetch.
             // Assuming fetchAPI handles FormData if body is FormData (standard)
-            const response = await fetchAPI<{ isLocked: boolean; password?: string }>('/salary/validate-file', {
+            const response = await fetchAPI<{ isLocked: boolean; usesSavedPassword?: boolean }>('/salary/validate-file', {
                 method: 'POST',
                 body: formData,
             });
 
             if (response.isLocked) {
                 setIsLocked(true);
-            } else {
-                if (response.password) {
-                    // Found saved password
-                    setFormData(prev => ({ ...prev, pdfPassword: response.password! }));
-                }
             }
         } catch (e) {
             console.error("File check failed", e);
