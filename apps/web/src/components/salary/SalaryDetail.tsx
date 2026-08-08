@@ -1,5 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { format } from "date-fns";
+import { getDocument, GlobalWorkerOptions, type PDFDocumentProxy } from "pdfjs-dist";
+import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import {
     Dialog,
     DialogContent,
@@ -7,10 +9,12 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import type { SalaryRecord } from "./salary.types";
-import { fetchAPI } from "@/lib/api";
-import { FileText, Download, Building2 } from "lucide-react";
+import { fetchAPI, fetchBlob } from "@/lib/api";
+import { FileText, Eye, ArrowLeft, Building2, Loader2, ZoomIn, ZoomOut } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+
+GlobalWorkerOptions.workerSrc = pdfWorker;
 
 // Helper to fix potential encoding issues (Latin1 treated as UTF-8)
 const fixEncoding = (str: string) => {
@@ -28,6 +32,15 @@ interface SalaryDetailModalProps {
 
 export default function SalaryDetailModal({ salaryId, onClose }: SalaryDetailModalProps) {
     const [data, setData] = useState<SalaryRecord | null>(null);
+    const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+    const [pdfSalaryId, setPdfSalaryId] = useState<string | null>(null);
+    const [pdfDocument, setPdfDocument] = useState<PDFDocumentProxy | null>(null);
+    const [pdfPageCount, setPdfPageCount] = useState(0);
+    const [pdfZoom, setPdfZoom] = useState(1);
+    const [isPdfOpen, setIsPdfOpen] = useState(false);
+    const [isPdfLoading, setIsPdfLoading] = useState(false);
+    const [pdfError, setPdfError] = useState<string | null>(null);
+    const canvasRefs = useRef<Record<number, HTMLCanvasElement | null>>({});
 
     useEffect(() => {
         if (salaryId) {
@@ -38,6 +51,112 @@ export default function SalaryDetailModal({ salaryId, onClose }: SalaryDetailMod
         }
     }, [salaryId]);
 
+    useEffect(() => {
+        return () => {
+            if (pdfUrl) URL.revokeObjectURL(pdfUrl);
+        };
+    }, [pdfUrl]);
+
+    useEffect(() => {
+        if (!pdfUrl) return;
+
+        let cancelled = false;
+        const loadingTask = getDocument({ url: pdfUrl });
+        loadingTask.onPassword = (_callback: (password: string) => void, _reason: number) => {
+            void _callback;
+            void _reason;
+            if (!cancelled) setPdfError("Este documento está protegido con contraseña y no se puede mostrar aquí.");
+        };
+
+        loadingTask.promise
+            .then((document) => {
+                if (cancelled) return;
+                setPdfDocument(document);
+                setPdfPageCount(document.numPages);
+            })
+            .catch((error) => {
+                if (!cancelled) {
+                    console.error(error);
+                    setPdfError("No se ha podido interpretar el PDF.");
+                }
+            })
+            .finally(() => {
+                if (!cancelled) setIsPdfLoading(false);
+            });
+
+        return () => {
+            cancelled = true;
+            void loadingTask.destroy();
+        };
+    }, [pdfUrl]);
+
+    useEffect(() => {
+        if (!pdfDocument || !pdfPageCount) return;
+
+        let cancelled = false;
+        const renderPages = async () => {
+            setIsPdfLoading(true);
+            try {
+                for (let pageNumber = 1; pageNumber <= pdfPageCount; pageNumber += 1) {
+                    if (cancelled) return;
+                    const canvas = canvasRefs.current[pageNumber];
+                    if (!canvas) continue;
+
+                    const page = await pdfDocument.getPage(pageNumber);
+                    const viewport = page.getViewport({ scale: 1.25 * pdfZoom });
+                    const context = canvas.getContext('2d');
+                    if (!context) continue;
+
+                    canvas.width = viewport.width;
+                    canvas.height = viewport.height;
+                    await page.render({ canvas, canvasContext: context, viewport }).promise;
+                }
+            } catch (error) {
+                if (!cancelled) {
+                    console.error(error);
+                    setPdfError("No se ha podido renderizar el PDF.");
+                }
+            } finally {
+                if (!cancelled) setIsPdfLoading(false);
+            }
+        };
+
+        void renderPages();
+        return () => {
+            cancelled = true;
+        };
+    }, [pdfDocument, pdfPageCount, pdfZoom]);
+
+    const openPdf = async () => {
+        if (!data?.fileName) return;
+        setIsPdfOpen(true);
+        setPdfError(null);
+        if (pdfUrl && pdfSalaryId === data.id) return;
+
+        if (pdfUrl) URL.revokeObjectURL(pdfUrl);
+        setPdfUrl(null);
+        setPdfDocument(null);
+        setPdfPageCount(0);
+        setPdfZoom(1);
+
+        try {
+            setIsPdfLoading(true);
+            const blob = await fetchBlob(`/salary/${data.id}/file`);
+            setPdfUrl(URL.createObjectURL(blob));
+            setPdfSalaryId(data.id);
+        } catch (error) {
+            console.error(error);
+            setPdfError("No se ha podido cargar el documento.");
+        } finally {
+            setIsPdfLoading(false);
+        }
+    };
+
+    const closePdf = () => {
+        setIsPdfOpen(false);
+        setPdfError(null);
+    };
+
     if (!salaryId || !data) return null;
 
     const payments = data.breakdown?.filter(i => i.type === 'payment') || [];
@@ -45,7 +164,48 @@ export default function SalaryDetailModal({ salaryId, onClose }: SalaryDetailMod
 
     return (
         <Dialog open={!!salaryId} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="max-w-lg p-0 overflow-hidden gap-0">
+            <DialogContent className={isPdfOpen ? "max-w-5xl w-[95vw] h-[90vh] p-0 overflow-hidden gap-0" : "max-w-lg p-0 overflow-hidden gap-0"}>
+                {isPdfOpen ? (
+                    <div className="flex h-full flex-col">
+                        <DialogHeader className="flex-row items-center justify-between border-b px-5 py-3">
+                            <div className="flex min-w-0 items-center">
+                                <Button variant="ghost" size="icon" onClick={closePdf} aria-label="Volver al detalle">
+                                    <ArrowLeft className="h-4 w-4" />
+                                </Button>
+                                <DialogTitle className="ml-2 truncate">{fixEncoding(data.fileName || "Nómina")}</DialogTitle>
+                            </div>
+                            <div className="flex items-center gap-1">
+                                <Button variant="ghost" size="icon" onClick={() => setPdfZoom((zoom) => Math.max(0.75, zoom - 0.25))} aria-label="Reducir zoom">
+                                    <ZoomOut className="h-4 w-4" />
+                                </Button>
+                                <span className="w-12 text-center text-xs text-muted-foreground">{Math.round(pdfZoom * 100)}%</span>
+                                <Button variant="ghost" size="icon" onClick={() => setPdfZoom((zoom) => Math.min(2.5, zoom + 0.25))} aria-label="Aumentar zoom">
+                                    <ZoomIn className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        </DialogHeader>
+                        <div className="min-h-0 flex-1 overflow-auto bg-muted/30 p-4">
+                            {isPdfLoading && (
+                                <div className="flex h-full items-center justify-center gap-2 text-sm text-muted-foreground">
+                                    <Loader2 className="h-4 w-4 animate-spin" /> Cargando documento…
+                                </div>
+                            )}
+                            {pdfError && <p className="p-6 text-center text-sm text-destructive">{pdfError}</p>}
+                            {pdfDocument && !pdfError && (
+                                <div className="flex flex-col items-center gap-4">
+                                    {Array.from({ length: pdfPageCount }, (_, index) => index + 1).map((pageNumber) => (
+                                        <canvas
+                                            key={pageNumber}
+                                            ref={(canvas) => { canvasRefs.current[pageNumber] = canvas; }}
+                                            className="max-w-full rounded bg-white shadow-sm"
+                                        />
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                ) : (
+                <>
                 <div className="bg-primary/5 p-6 border-b">
                     <DialogHeader className="mb-4">
                         <DialogTitle className="flex justify-start items-center gap-3">
@@ -120,16 +280,18 @@ export default function SalaryDetailModal({ salaryId, onClose }: SalaryDetailMod
                     )}
 
                     {data.fileName && (
-                        <Button variant="outline" className="w-full gap-2 h-12" onClick={() => window.open(data.fileUrl || '#', '_blank')}>
+                        <Button variant="outline" className="w-full gap-2 h-12" onClick={openPdf}>
                             <FileText className="w-4 h-4 text-primary" />
                             <div className="flex flex-col items-start flex-1 text-left">
-                                <span className="text-sm font-medium leading-none">Original Document</span>
+                                <span className="text-sm font-medium leading-none">Ver documento</span>
                                 <span className="text-[10px] text-muted-foreground">{fixEncoding(data.fileName)}</span>
                             </div>
-                            <Download className="w-4 h-4 text-muted-foreground" />
+                            <Eye className="w-4 h-4 text-muted-foreground" />
                         </Button>
                     )}
                 </div>
+                </>
+                )}
             </DialogContent>
         </Dialog>
     );

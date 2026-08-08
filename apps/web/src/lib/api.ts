@@ -41,6 +41,25 @@ export async function fetchAPI<T>(endpoint: string, options?: RequestInit): Prom
     return response.json() as Promise<T>;
 }
 
+export async function fetchBlob(endpoint: string, options?: RequestInit): Promise<Blob> {
+    const token = getToken();
+    const response = await fetch(`${API_URL}${endpoint}`, {
+        credentials: "include",
+        ...options,
+        headers: {
+            ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+            ...options?.headers,
+        },
+    });
+
+    if (!response.ok) {
+        const payload = await response.json().catch(() => null) as { error?: string } | null;
+        throw new Error(payload?.error || `API Error: ${response.status} ${response.statusText}`);
+    }
+
+    return response.blob();
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function postAPI<T>(endpoint: string, body: any, options?: RequestInit): Promise<T> {
     const isFormData = body instanceof FormData;

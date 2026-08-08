@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { salaryService } from './salary.service';
 import { createSalaryRecordSchema, getSalaryRecordsQuerySchema, breakdownItemSchema } from './salary.schema';
 import fs from 'fs';
+import path from 'path';
 import { salaryPasswordService } from '../salary-password/salary-password.service';
 import { encrypt, decrypt } from '../../common/utils/encryption';
 import { standardFontDataUrl } from '../../common/utils/pdf';
@@ -71,6 +72,30 @@ export class SalaryController {
         } catch (error) {
             console.error(error);
             res.status(500).json({ error: 'Internal Server Error' });
+        }
+    }
+
+    async file(req: any, res: Response) {
+        try {
+            const userId = req.user!.id;
+            const result = await salaryService.findById(userId, req.params.id);
+
+            if (!result?.fileStorageKey) {
+                return res.status(404).json({ error: 'Salary document not found' });
+            }
+
+            const filePath = result.fileStorageKey;
+            if (path.extname(filePath).toLowerCase() !== '.pdf' || !fs.existsSync(filePath)) {
+                return res.status(404).json({ error: 'Salary document not found' });
+            }
+
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', 'inline');
+            res.setHeader('Cache-Control', 'private, no-store');
+            return res.sendFile(filePath);
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ error: 'Internal Server Error' });
         }
     }
 
