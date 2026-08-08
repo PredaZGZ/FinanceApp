@@ -18,6 +18,10 @@ interface PendingTransaction {
     currency: string;
     type: string;
     value: number;
+    entity: "cash" | "trade";
+    symbol?: string;
+    name?: string | null;
+    isin?: string | null;
 }
 
 export default function PendingConversions() {
@@ -91,6 +95,7 @@ export default function PendingConversions() {
                 <TableHeader>
                     <TableRow>
                         <TableHead>Date</TableHead>
+                        <TableHead>Asset</TableHead>
                         <TableHead>Type</TableHead>
                         <TableHead>Currency</TableHead>
                         <TableHead className="text-right">Original Value</TableHead>
@@ -102,6 +107,14 @@ export default function PendingConversions() {
                     {transactions.map((tx, index) => (
                         <TableRow key={tx.id}>
                             <TableCell>{formatDate(tx.date)}</TableCell>
+                            <TableCell>
+                                {tx.name || tx.symbol || "Cash movement"}
+                                {(tx.symbol || tx.isin) && (
+                                    <div className="text-xs text-muted-foreground">
+                                        {tx.symbol}{tx.isin ? ` · ISIN ${tx.isin}` : ""}
+                                    </div>
+                                )}
+                            </TableCell>
                             <TableCell>{tx.type}</TableCell>
                             <TableCell>{tx.currency}</TableCell>
                             <TableCell className="text-right">

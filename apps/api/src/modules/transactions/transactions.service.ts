@@ -62,34 +62,51 @@ export class TransactionsService {
     }
 
     async findPendingConversions(userId: string) {
-        const transfers = await prisma.cashTransfer.findMany({
-            where: {
-                userId,
-                type: { in: ['Cash top-up', 'Cash withdrawal', 'Deposit', 'Withdrawal'] },
-                currency: { not: Currency.EUR },
-                conversionRate: null,
-                skippedConversion: false,
-            },
-            select: { id: true, date: true, currency: true, type: true, value: true },
-            orderBy: { date: 'desc' },
-        });
-        return transfers.map(transfer => ({ ...transfer, value: Number(transfer.value) }));
+        const [transfers, trades] = await Promise.all([
+            prisma.cashTransfer.findMany({
+                where: {
+                    userId,
+                    type: { in: ['Cash top-up', 'Cash withdrawal', 'Deposit', 'Withdrawal'] },
+                    currency: { not: Currency.EUR },
+                    conversionRate: null,
+                    skippedConversion: false,
+                },
+                select: { id: true, date: true, currency: true, type: true, value: true },
+                orderBy: { date: 'desc' },
+            }),
+            prisma.stockTrade.findMany({
+                where: { userId, currency: { not: Currency.EUR }, conversionRate: null },
+                select: { id: true, date: true, currency: true, type: true, value: true, symbol: true, name: true, isin: true },
+                orderBy: { date: 'desc' },
+            }),
+        ]);
+
+        return [
+            ...transfers.map(transfer => ({ ...transfer, entity: 'cash' as const, value: Number(transfer.value) })),
+            ...trades.map(trade => ({ ...trade, entity: 'trade' as const, value: Number(trade.value) })),
+        ].sort((left, right) => right.date.getTime() - left.date.getTime());
     }
 
     async updateTransactionConversion(userId: string, id: string, eurCost: number) {
-        const tx = await prisma.cashTransfer.findFirst({
+        const cashTransfer = await prisma.cashTransfer.findFirst({
             where: { id, userId },
             select: { value: true },
         });
-        if (!tx) {
+        const stockTrade = cashTransfer ? null : await prisma.stockTrade.findFirst({
+            where: { id, userId },
+            select: { value: true },
+        });
+        const transaction = cashTransfer ?? stockTrade;
+        if (!transaction) {
             throw new Error('Transaction not found');
         }
 
-        const rate = eurCost / Math.abs(Number(tx.value));
-        await prisma.cashTransfer.update({
-            where: { id },
-            data: { eurCost, conversionRate: rate },
-        });
+        const rate = eurCost / Math.abs(Number(transaction.value));
+        if (cashTransfer) {
+            await prisma.cashTransfer.update({ where: { id }, data: { eurCost, conversionRate: rate } });
+        } else {
+            await prisma.stockTrade.update({ where: { id }, data: { eurCost, eurValue: eurCost, conversionRate: rate } });
+        }
 
         return { id, eurCost, conversionRate: rate };
     }
