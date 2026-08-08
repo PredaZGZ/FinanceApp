@@ -1,6 +1,6 @@
 import { revolutService } from './revolut.service';
 import { myInvestorService } from './myinvestor.service';
-import pool from '../../common/db/client';
+import { prisma } from '../../common/db/prisma';
 
 export class ImportService {
     async importRevolut(userId: string, buffer: Buffer, originalName: string) {
@@ -27,43 +27,33 @@ export class ImportService {
     }
 
     async getImportStatus(userId: string) {
-        const client = await pool.connect();
-        try {
-            const result = await client.query(`
-                SELECT DISTINCT ON (source) source, "createdAt"
-                FROM import_history
-                WHERE status = 'success' AND "userId" = $1
-                ORDER BY source, "createdAt" DESC
-            `, [userId]);
+        const history = await prisma.importHistory.findMany({
+            where: { userId, status: 'success', source: { in: ['revolut', 'myinvestor'] } },
+            select: { source: true, createdAt: true },
+            orderBy: { createdAt: 'desc' },
+        });
 
-            const status: Record<string, string | null> = {
-                revolut: null,
-                myinvestor: null
-            };
+        const status: Record<string, string | null> = {
+            revolut: null,
+            myinvestor: null,
+        };
 
-            result.rows.forEach(row => {
-                if (status.hasOwnProperty(row.source)) {
-                    status[row.source] = row.createdAt;
-                }
-            });
-
-            return status;
-        } finally {
-            client.release();
+        for (const entry of history) {
+            if (status[entry.source] === null) {
+                status[entry.source] = entry.createdAt.toISOString();
+            }
         }
+
+        return status;
     }
 
     private async logImport(userId: string, source: string, filename: string, status: string, recordsProcessed: number) {
-        const client = await pool.connect();
         try {
-            await client.query(
-                `INSERT INTO import_history (source, filename, status, "recordsProcessed", "userId") VALUES ($1, $2, $3, $4, $5)`,
-                [source, filename, status, recordsProcessed, userId]
-            );
+            await prisma.importHistory.create({
+                data: { source, filename, status, recordsProcessed, userId },
+            });
         } catch (err) {
             console.error('Failed to log import history:', err);
-        } finally {
-            client.release();
         }
     }
 }
