@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard,
   LogOut,
-  Settings,
   Menu,
   X,
   PieChart,
@@ -32,7 +31,6 @@ export default function MainLayout() {
     { icon: PieChart, label: "Reports", path: "/reports" },
     { icon: Banknote, label: "Salaries", path: "/salary" },
     { icon: Upload, label: "Import Data", path: "/import" },
-    { icon: Settings, label: "Settings", path: "/settings" },
   ];
 
   return (

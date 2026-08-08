@@ -1,9 +1,11 @@
+import { lazy, Suspense } from "react";
 import type { RouteObject } from "react-router-dom";
-import TransactionsPage from "@/pages/transactions/TransactionsPage";
+
+const TransactionsPage = lazy(() => import("@/pages/transactions/TransactionsPage"));
 
 export const transactionsRoutes: RouteObject[] = [
     {
         path: "transactions",
-        element: <TransactionsPage />,
+        element: <Suspense fallback={null}><TransactionsPage /></Suspense>,
     },
 ];
