@@ -11,6 +11,14 @@ interface Order {
     used: boolean;
 }
 
+const FUND_NAMES: Record<string, string> = {
+    IE000ZYRH0Q7: 'iShares Developed World Index (IE) Acc EUR Class S',
+    IE0031786696: 'Vanguard Emerging Markets Stock Index Fund EUR Acc',
+    IE00B42W4L06: 'Vanguard Global Small-Cap Index Fund EUR Acc',
+    IE00BYX5NX33: 'Fidelity MSCI World Index P Acc EUR',
+    LU0625737910: 'Pictet-China Index P Eur',
+};
+
 interface Movement {
     dateOp: Date;
     dateVal: Date;
@@ -127,6 +135,9 @@ export class MyInvestorService {
                             date: movement.dateOp,
                             currency: movement.currency as Currency,
                             symbol,
+                            isin: bestMatch?.isin ?? null,
+                            name: bestMatch ? (FUND_NAMES[bestMatch.isin] ?? symbol) : null,
+                            assetType: bestMatch ? 'Fund' : null,
                             type: 'Fund',
                             quantity,
                             price,
