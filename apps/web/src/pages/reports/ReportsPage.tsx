@@ -151,8 +151,8 @@ export default function ReportsPage() {
         }) ?? [];
 
         return {
-            gross: currentYearSalaries.reduce((total, salary) => total + (salary.grossSalary ?? 0), 0),
-            net: currentYearSalaries.reduce((total, salary) => total + (salary.netSalary ?? 0), 0),
+            gross: currentYearSalaries.reduce((total, salary) => total + Number(salary.grossSalary ?? 0), 0),
+            net: currentYearSalaries.reduce((total, salary) => total + Number(salary.netSalary ?? 0), 0),
             count: currentYearSalaries.length,
             latest: data?.salaries.data[0] ?? null,
         };
@@ -319,7 +319,7 @@ export default function ReportsPage() {
                         <div className="flex items-center justify-between text-sm">
                             <span className="text-muted-foreground">Última nómina</span>
                             <span className="font-semibold">
-                                {salaryMetrics.latest ? formatCurrency(salaryMetrics.latest.netSalary) : "—"}
+                                {salaryMetrics.latest ? formatCurrency(Number(salaryMetrics.latest.netSalary ?? 0)) : "—"}
                             </span>
                         </div>
                         {salaryMetrics.latest && (
