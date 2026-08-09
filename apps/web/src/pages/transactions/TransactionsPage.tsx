@@ -48,6 +48,11 @@ type SortConfig = {
     direction: "asc" | "desc";
 } | null;
 
+function displayTransactionType(type: string, side: string) {
+    if (type === "InternalTransfer") return side === "Buy" ? "Transfer in" : "Transfer out";
+    return type;
+}
+
 export default function TransactionsPage() {
     const [searchParams, setSearchParams] = useSearchParams();
     const [data, setData] = useState<Transaction[]>([]);
@@ -256,7 +261,7 @@ export default function TransactionsPage() {
                                                         {tx.isin ? ` · ISIN ${tx.isin}` : ''}
                                                     </div>
                                                 </TableCell>
-                                                <TableCell>{tx.type}</TableCell>
+                                                <TableCell>{displayTransactionType(tx.type, tx.side)}</TableCell>
                                                 <TableCell>
                                                     <span
                                                         className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ring-1 ring-inset ${tx.side === "Buy"

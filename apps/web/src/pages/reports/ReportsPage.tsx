@@ -99,6 +99,11 @@ function formatDate(value: string) {
     }).format(date);
 }
 
+function displayTransactionType(type: string, side?: string) {
+    if (type === "InternalTransfer") return side === "Buy" ? "Transfer in" : "Transfer out";
+    return side || type;
+}
+
 function MetricCard({
     title,
     value,
@@ -455,7 +460,7 @@ export default function ReportsPage() {
                                                     </div>
                                                 )}
                                             </TableCell>
-                                            <TableCell className="text-muted-foreground">{transaction.side || transaction.type}</TableCell>
+                                            <TableCell className="text-muted-foreground">{displayTransactionType(transaction.type, transaction.side)}</TableCell>
                                             <TableCell className="text-right">
                                                 {formatCurrency(transaction.value)}
                                                 <span className="ml-1 text-xs text-muted-foreground">{transaction.currency}</span>
