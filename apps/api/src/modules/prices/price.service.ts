@@ -13,6 +13,7 @@ interface PriceCache {
 
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes cache
 const EODHD_BASE_URL = 'https://eodhd.com/api/eod';
+const EODHD_FUND_EXCHANGE = 'EUFUND';
 
 const FUND_ISINS = new Set([
     'IE000ZYRH0Q7',
@@ -24,8 +25,6 @@ const FUND_ISINS = new Set([
 
 export class PriceService {
     private cache: PriceCache = {};
-
-    private readonly eodhdApiKey = process.env.EODHD_API_KEY?.trim();
 
     private readonly SYMBOL_MAP: Record<string, string> = {
         ETH: 'ETH-USD',
@@ -118,7 +117,8 @@ export class PriceService {
         results: Record<string, { price: number, currency: string }>,
         now: number,
     ): Promise<void> {
-        if (!this.eodhdApiKey) return;
+        const eodhdApiKey = process.env.EODHD_API_KEY?.trim();
+        if (!eodhdApiKey) return;
 
         const missingFunds = [...new Set(symbols)].filter((symbol) =>
             FUND_ISINS.has(symbol) && !results[symbol],
@@ -126,8 +126,10 @@ export class PriceService {
 
         await Promise.all(missingFunds.map(async (isin) => {
             try {
-                const url = new URL(`${EODHD_BASE_URL}/${isin}`);
-                url.searchParams.set('api_token', this.eodhdApiKey!);
+                // EODHD resolves the ISIN through its EUFUND exchange namespace.
+                // The search endpoint returns this exchange for all supported funds.
+                const url = new URL(`${EODHD_BASE_URL}/${isin}.${EODHD_FUND_EXCHANGE}`);
+                url.searchParams.set('api_token', eodhdApiKey);
                 url.searchParams.set('fmt', 'json');
                 url.searchParams.set('period', 'd');
                 url.searchParams.set('order', 'd');
