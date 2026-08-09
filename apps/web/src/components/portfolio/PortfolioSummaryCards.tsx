@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { PortfolioSummary } from "@/components/portfolio/portfolio.types";
-import { TrendingUp, Wallet, Layers } from "lucide-react";
+import { TrendingUp, Wallet, CircleDollarSign } from "lucide-react";
 
 interface PortfolioSummaryCardsProps {
     summary: PortfolioSummary;
@@ -10,8 +10,6 @@ interface PortfolioSummaryCardsProps {
 
 export function PortfolioSummaryCards({ summary, prices }: PortfolioSummaryCardsProps) {
     const { totalRealizedGain, holdings, conversionComplete } = summary;
-    const activeHoldingsCount = holdings.filter(h => h.remainingShares > 0).length;
-
     // Calculate Unrealized metrics
     const usdEurRate = prices?.["USDEUR=X"]?.price || 0.95;
     let totalMarketValue = 0;
@@ -87,16 +85,16 @@ export function PortfolioSummaryCards({ summary, prices }: PortfolioSummaryCards
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">
-                        Active Holdings
+                        Total Market Value
                     </CardTitle>
-                    <Layers className="h-4 w-4 text-muted-foreground" />
+                    <CircleDollarSign className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">
-                        {activeHoldingsCount}
+                        €{totalMarketValue.toFixed(2)}
                     </div>
                     <p className="text-xs text-muted-foreground">
-                        Diversification across assets
+                        Current value of active positions
                     </p>
                 </CardContent>
             </Card>
