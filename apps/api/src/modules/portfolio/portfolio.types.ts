@@ -10,6 +10,8 @@ export interface StockTrade {
     side: 'Buy' | 'Sell';
     fees: number;
     commission: number;
+    type?: string;
+    costBasisOverride?: number | null;
 }
 
 export interface TradeMatch {

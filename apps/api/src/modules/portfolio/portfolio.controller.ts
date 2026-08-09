@@ -35,6 +35,8 @@ export class PortfolioController {
                 quantity: t.quantity,
                 price: t.price,
                 side: t.side,
+                type: t.type,
+                costBasisOverride: t.costBasisOverride,
                 fees: t.fees,
                 commission: t.commission
             }));
@@ -83,6 +85,8 @@ export class PortfolioController {
                 quantity: t.quantity,
                 price: t.price,
                 side: t.side,
+                type: t.type,
+                costBasisOverride: t.costBasisOverride,
                 fees: t.fees,
                 commission: t.commission
             }));

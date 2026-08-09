@@ -26,7 +26,7 @@ export class PortfolioService {
         for (const trade of sortedTrades) {
             if (trade.side === 'Buy') {
                 // Cost Basis = (Price * Quantity) + Fees + Commission
-                const totalCost = (trade.price * trade.quantity) + (trade.fees || 0) + (trade.commission || 0);
+                const totalCost = trade.costBasisOverride ?? ((trade.price * trade.quantity) + (trade.fees || 0) + (trade.commission || 0));
                 const costPerShare = totalCost / trade.quantity;
 
                 buyQueue.push({
@@ -57,7 +57,7 @@ export class PortfolioService {
                     const sellValue = (trade.price * quantityFromThisLot) - sellCostsForChunk;
                     const buyCost = buyLot.costPerShare * quantityFromThisLot;
 
-                    const gain = sellValue - buyCost;
+                    const gain = trade.type === 'InternalTransfer' ? 0 : sellValue - buyCost;
                     realizedGain += gain;
 
                     breakdown.push({
@@ -121,7 +121,7 @@ export class PortfolioService {
 
         for (const trade of sortedTrades) {
             if (trade.side === 'Buy') {
-                const tradeCost = (trade.price * trade.quantity) + (trade.fees || 0) + (trade.commission || 0);
+                const tradeCost = trade.costBasisOverride ?? ((trade.price * trade.quantity) + (trade.fees || 0) + (trade.commission || 0));
                 totalShares += trade.quantity;
                 totalCost += tradeCost;
 
@@ -137,7 +137,7 @@ export class PortfolioService {
 
                 // Net Proceeds = (Price * Quantity) - Fees - Commission
                 const netProceeds = (trade.quantity * trade.price) - (trade.fees || 0) - (trade.commission || 0);
-                const gain = netProceeds - costOfSoldShares;
+                const gain = trade.type === 'InternalTransfer' ? 0 : netProceeds - costOfSoldShares;
 
                 realizedGain += gain;
 

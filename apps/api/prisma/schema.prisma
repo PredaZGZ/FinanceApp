@@ -81,28 +81,29 @@ model ProjectEntry {
 }
 
 model StockTrade {
-  id             String    @id
-  date           DateTime  @db.Timestamp(3)
-  currency       Currency
-  symbol         String
-  isin           String?   @db.VarChar(20)
-  name           String?   @db.VarChar(255)
-  assetType      String?
-  type           String    @default("Trade - Market")
-  quantity       Decimal   @db.Decimal(20, 8)
-  price          Decimal   @db.Decimal(20, 8)
-  side           TradeSide
-  value          Decimal   @db.Decimal(20, 8)
-  eurCost        Float?
-  eurValue       Decimal?  @db.Decimal(20, 8)
-  conversionRate Float?
-  fees           Decimal   @db.Decimal(20, 8)
-  commission     Decimal   @db.Decimal(20, 8)
-  source         String?
-  userId         String?   @db.Uuid
-  createdAt      DateTime  @default(now()) @db.Timestamp(3)
-  updatedAt      DateTime  @db.Timestamp(3)
-  user           User?     @relation(fields: [userId], references: [id])
+  id                String    @id
+  date              DateTime  @db.Timestamp(3)
+  currency          Currency
+  symbol            String
+  isin              String?   @db.VarChar(20)
+  name              String?   @db.VarChar(255)
+  assetType         String?
+  type              String    @default("Trade - Market")
+  quantity          Decimal   @db.Decimal(20, 8)
+  price             Decimal   @db.Decimal(20, 8)
+  side              TradeSide
+  value             Decimal   @db.Decimal(20, 8)
+  eurCost           Float?
+  eurValue          Decimal?  @db.Decimal(20, 8)
+  conversionRate    Float?
+  costBasisOverride Float?
+  fees              Decimal   @db.Decimal(20, 8)
+  commission        Decimal   @db.Decimal(20, 8)
+  source            String?
+  userId            String?   @db.Uuid
+  createdAt         DateTime  @default(now()) @db.Timestamp(3)
+  updatedAt         DateTime  @db.Timestamp(3)
+  user              User?     @relation(fields: [userId], references: [id])
 
   @@unique([userId, date, currency, symbol, side, quantity, price])
   @@index([userId])
