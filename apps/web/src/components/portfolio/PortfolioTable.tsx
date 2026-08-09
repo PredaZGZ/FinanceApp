@@ -119,3 +119,41 @@ export function PortfolioTable({ holdings, prices }: PortfolioTableProps) {
         </div>
     );
 }
+
+export function ClosedPositionsTable({ holdings }: { holdings: Holding[] }) {
+    return (
+        <div className="rounded-md border overflow-x-auto">
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>Asset</TableHead>
+                        <TableHead className="text-right">Realized Profit</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {holdings.map((holding) => {
+                        const currencySymbol = holding.currency === 'USD' ? '$' : '€';
+                        const gain = holding.realizedGain;
+
+                        return (
+                            <TableRow key={holding.symbol}>
+                                <TableCell className="font-medium">
+                                    <Link to={`/portfolio/${holding.symbol}`} className="hover:underline text-blue-500">
+                                        {holding.name || holding.symbol}
+                                    </Link>
+                                    <div className="text-xs text-muted-foreground">
+                                        {holding.symbol}
+                                        {holding.isin ? ` · ISIN ${holding.isin}` : ''}
+                                    </div>
+                                </TableCell>
+                                <TableCell className={`text-right font-medium ${gain >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                                    {gain >= 0 ? '+' : ''}{currencySymbol}{gain.toFixed(2)}
+                                </TableCell>
+                            </TableRow>
+                        );
+                    })}
+                </TableBody>
+            </Table>
+        </div>
+    );
+}

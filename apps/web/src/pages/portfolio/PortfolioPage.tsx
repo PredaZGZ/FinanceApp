@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { fetchAPI, fetchPrices } from "@/lib/api";
 import type { PortfolioSummary } from "@/components/portfolio/portfolio.types";
 import { PortfolioSummaryCards, PortfolioSummarySkeleton } from "@/components/portfolio/PortfolioSummaryCards";
-import { PortfolioTable } from "@/components/portfolio/PortfolioTable";
+import { ClosedPositionsTable, PortfolioTable } from "@/components/portfolio/PortfolioTable";
 import { TableSkeleton } from "@/components/common/TableSkeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -20,6 +20,9 @@ export default function PortfolioPage() {
     const [method, setMethod] = useState<string>("FIFO");
 
     const [prices, setPrices] = useState<Record<string, { price: number; currency: string }>>({});
+
+    const openHoldings = summary?.holdings.filter((holding) => holding.remainingShares > 0) ?? [];
+    const closedPositions = summary?.holdings.filter((holding) => holding.remainingShares <= 0 && holding.realizedGain !== 0) ?? [];
 
     useEffect(() => {
         const fetchSummary = async () => {
@@ -93,10 +96,27 @@ export default function PortfolioPage() {
 
                         <Card className="transition-opacity">
                             <CardHeader>
-                                <CardTitle>Holdings</CardTitle>
+                                <CardTitle>Open Holdings</CardTitle>
                             </CardHeader>
                             <CardContent className="overflow-x-auto">
-                                <PortfolioTable holdings={summary.holdings} prices={prices} />
+                                {openHoldings.length > 0 ? (
+                                    <PortfolioTable holdings={openHoldings} prices={prices} />
+                                ) : (
+                                    <p className="text-sm text-muted-foreground">No open holdings.</p>
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        <Card className="transition-opacity">
+                            <CardHeader>
+                                <CardTitle>Closed Positions</CardTitle>
+                            </CardHeader>
+                            <CardContent className="overflow-x-auto">
+                                {closedPositions.length > 0 ? (
+                                    <ClosedPositionsTable holdings={closedPositions} />
+                                ) : (
+                                    <p className="text-sm text-muted-foreground">No closed positions.</p>
+                                )}
                             </CardContent>
                         </Card>
                     </>
