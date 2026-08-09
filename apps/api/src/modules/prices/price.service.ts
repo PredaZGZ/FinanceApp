@@ -17,6 +17,7 @@ export class PriceService {
     private cache: PriceCache = {};
 
     private readonly SYMBOL_MAP: Record<string, string> = {
+        ETH: 'ETH-USD',
         // Mapped based on user's specific funds (ISIN Verified)
         'EMERGING MARKETS STOCK EUR ACC': '0P00012I6A.F', // Vanguard Emerging Markets Stock Index Fund EUR Acc (IE0031786696)
         'MSCI WORLD INDEX P ACC EUR': 'IE00BYX5NX33.SG',  // Fidelity MSCI World Index Fund P-Acc-EUR (IE00BYX5NX33)
