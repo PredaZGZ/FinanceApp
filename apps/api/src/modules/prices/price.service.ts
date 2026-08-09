@@ -12,9 +12,20 @@ interface PriceCache {
 }
 
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes cache
+const EODHD_BASE_URL = 'https://eodhd.com/api/eod';
+
+const FUND_ISINS = new Set([
+    'IE000ZYRH0Q7',
+    'IE0031786696',
+    'IE00B42W4L06',
+    'IE00BYX5NX33',
+    'LU0625737910',
+]);
 
 export class PriceService {
     private cache: PriceCache = {};
+
+    private readonly eodhdApiKey = process.env.EODHD_API_KEY?.trim();
 
     private readonly SYMBOL_MAP: Record<string, string> = {
         ETH: 'ETH-USD',
@@ -97,7 +108,51 @@ export class PriceService {
             // Return partial results
         }
 
+        await this.fetchFundPricesFromEodhd(symbols, results, now);
+
         return results;
+    }
+
+    private async fetchFundPricesFromEodhd(
+        symbols: string[],
+        results: Record<string, { price: number, currency: string }>,
+        now: number,
+    ): Promise<void> {
+        if (!this.eodhdApiKey) return;
+
+        const missingFunds = [...new Set(symbols)].filter((symbol) =>
+            FUND_ISINS.has(symbol) && !results[symbol],
+        );
+
+        await Promise.all(missingFunds.map(async (isin) => {
+            try {
+                const url = new URL(`${EODHD_BASE_URL}/${isin}`);
+                url.searchParams.set('api_token', this.eodhdApiKey!);
+                url.searchParams.set('fmt', 'json');
+                url.searchParams.set('period', 'd');
+                url.searchParams.set('order', 'd');
+                url.searchParams.set('limit', '1');
+
+                const response = await fetch(url, { signal: AbortSignal.timeout(8_000) });
+                if (!response.ok) {
+                    console.error(`EODHD returned ${response.status} for fund ${isin}`);
+                    return;
+                }
+
+                const payload = await response.json() as unknown;
+                const latest = Array.isArray(payload) ? payload[0] : payload;
+                const price = Number((latest as { adjusted_close?: number; close?: number } | null)?.adjusted_close
+                    ?? (latest as { close?: number } | null)?.close);
+                if (!Number.isFinite(price) || price <= 0) return;
+
+                const currency = (latest as { currency?: string } | null)?.currency || 'EUR';
+                const data = { price, currency };
+                this.cache[isin] = { ...data, timestamp: now };
+                results[isin] = data;
+            } catch (error) {
+                console.error(`Error fetching fund ${isin} from EODHD:`, error);
+            }
+        }));
     }
 
     async search(query: string) {
