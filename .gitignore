@@ -56,7 +56,14 @@ OUTPUT.md
 
 # uploads
 uploads/
+# Personal documents and financial statements
 *.pdf
+*.doc
+*.docx
+*.xls
+*.xlsx
+*.csv
+*.tsv
 
 # Prisma generated client
 apps/api/src/generated/
