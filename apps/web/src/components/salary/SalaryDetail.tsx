@@ -162,47 +162,118 @@ export default function SalaryDetailModal({ salaryId, onClose }: SalaryDetailMod
     const payments = data.breakdown?.filter(i => i.type === 'payment') || [];
     const deductions = data.breakdown?.filter(i => i.type === 'deduction') || [];
 
+    const detailsContent = (
+        <div className="p-6 space-y-6">
+            {/* Breakdown List */}
+            <div className="space-y-4">
+                {payments.length > 0 && (
+                    <div>
+                        <h4 className="text-xs font-semibold text-muted-foreground uppercase mb-2">Earnings (Devengos)</h4>
+                        <div className="space-y-2">
+                            {payments.map((item, i) => (
+                                <div key={i} className="flex justify-between gap-4 text-sm">
+                                    <span>{item.concept}</span>
+                                    <span className="shrink-0 font-medium">€{item.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {deductions.length > 0 && (
+                    <div>
+                        <h4 className="text-xs font-semibold uppercase mb-2 text-rose-500">Deductions</h4>
+                        <div className="space-y-2">
+                            {deductions.map((item, i) => (
+                                <div key={i} className="flex justify-between gap-4 text-sm text-muted-foreground">
+                                    <span>{item.concept}</span>
+                                    <span className="shrink-0 text-rose-500">- €{item.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {(payments.length === 0 && deductions.length === 0) && (
+                    <p className="text-sm text-muted-foreground italic text-center py-4">No breakdown details available.</p>
+                )}
+            </div>
+
+            <div className="border-t pt-4 border-dashed">
+                <div className="flex justify-between items-center text-sm text-muted-foreground mb-1">
+                    <span>Gross Total</span>
+                    <span>€{data.grossSalary?.toLocaleString('en-US', { minimumFractionDigits: 2 }) || '0.00'}</span>
+                </div>
+                <div className="flex justify-between items-center text-2xl font-bold bg-muted/30 p-4 rounded-lg mt-2">
+                    <span>Net Pay</span>
+                    <span className="text-emerald-600">€{data.netSalary?.toLocaleString('en-US', { minimumFractionDigits: 2 }) || '0.00'}</span>
+                </div>
+            </div>
+
+            {data.notes && (
+                <div className="text-sm bg-yellow-50 dark:bg-yellow-900/10 p-3 rounded-md text-yellow-800 dark:text-yellow-200 border border-yellow-100 dark:border-yellow-900/20">
+                    <p className="text-xs font-bold uppercase opacity-50 mb-1">Notes</p>
+                    {data.notes}
+                </div>
+            )}
+        </div>
+    );
+
     return (
         <Dialog open={!!salaryId} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className={isPdfOpen ? "max-w-5xl w-[95vw] h-[90vh] p-0 overflow-hidden gap-0" : "max-w-lg p-0 overflow-hidden gap-0"}>
+            <DialogContent className={isPdfOpen ? "max-w-6xl w-[96vw] h-[90vh] p-0 overflow-hidden gap-0" : "max-w-lg p-0 overflow-hidden gap-0"}>
                 {isPdfOpen ? (
-                    <div className="flex h-full flex-col">
-                        <DialogHeader className="flex-row items-center justify-between border-b px-5 py-3">
-                            <div className="flex min-w-0 items-center">
-                                <Button variant="ghost" size="icon" onClick={closePdf} aria-label="Volver al detalle">
-                                    <ArrowLeft className="h-4 w-4" />
-                                </Button>
-                                <DialogTitle className="ml-2 truncate">{fixEncoding(data.fileName || "Nómina")}</DialogTitle>
-                            </div>
-                            <div className="flex items-center gap-1">
-                                <Button variant="ghost" size="icon" onClick={() => setPdfZoom((zoom) => Math.max(0.75, zoom - 0.25))} aria-label="Reducir zoom">
-                                    <ZoomOut className="h-4 w-4" />
-                                </Button>
-                                <span className="w-12 text-center text-xs text-muted-foreground">{Math.round(pdfZoom * 100)}%</span>
-                                <Button variant="ghost" size="icon" onClick={() => setPdfZoom((zoom) => Math.min(2.5, zoom + 0.25))} aria-label="Aumentar zoom">
-                                    <ZoomIn className="h-4 w-4" />
-                                </Button>
-                            </div>
-                        </DialogHeader>
-                        <div className="min-h-0 flex-1 overflow-auto bg-muted/30 p-4">
-                            {isPdfLoading && (
-                                <div className="flex h-full items-center justify-center gap-2 text-sm text-muted-foreground">
-                                    <Loader2 className="h-4 w-4 animate-spin" /> Cargando documento…
+                    <div className="grid h-full min-h-0 grid-cols-1 lg:grid-cols-[minmax(300px,0.4fr)_minmax(0,0.6fr)]">
+                        <aside className="min-h-0 overflow-y-auto border-b bg-background lg:border-b-0 lg:border-r">
+                            <div className="bg-primary/5 p-5 border-b">
+                                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Payslip Details</p>
+                                <div className="mt-2 flex items-center gap-2">
+                                    <Badge variant="outline" className="bg-background">{format(new Date(data.date), "MMM yyyy")}</Badge>
+                                    <span className="truncate text-sm font-semibold">{data.company}</span>
                                 </div>
-                            )}
-                            {pdfError && <p className="p-6 text-center text-sm text-destructive">{pdfError}</p>}
-                            {pdfDocument && !pdfError && (
-                                <div className="flex flex-col items-center gap-4">
-                                    {Array.from({ length: pdfPageCount }, (_, index) => index + 1).map((pageNumber) => (
-                                        <canvas
-                                            key={pageNumber}
-                                            ref={(canvas) => { canvasRefs.current[pageNumber] = canvas; }}
-                                            className="max-w-full rounded bg-white shadow-sm"
-                                        />
-                                    ))}
+                            </div>
+                            {detailsContent}
+                        </aside>
+
+                        <section className="flex min-h-0 min-w-0 flex-col">
+                            <DialogHeader className="shrink-0 flex-row items-center justify-between border-b px-5 py-3">
+                                <div className="flex min-w-0 items-center">
+                                    <Button variant="ghost" size="icon" onClick={closePdf} aria-label="Back to details">
+                                        <ArrowLeft className="h-4 w-4" />
+                                    </Button>
+                                    <DialogTitle className="ml-2 truncate">{fixEncoding(data.fileName || "Payslip")}</DialogTitle>
                                 </div>
-                            )}
-                        </div>
+                                <div className="flex items-center gap-1">
+                                    <Button variant="ghost" size="icon" onClick={() => setPdfZoom((zoom) => Math.max(0.75, zoom - 0.25))} aria-label="Zoom out">
+                                        <ZoomOut className="h-4 w-4" />
+                                    </Button>
+                                    <span className="w-12 text-center text-xs text-muted-foreground">{Math.round(pdfZoom * 100)}%</span>
+                                    <Button variant="ghost" size="icon" onClick={() => setPdfZoom((zoom) => Math.min(2.5, zoom + 0.25))} aria-label="Zoom in">
+                                        <ZoomIn className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </DialogHeader>
+                            <div className="min-h-0 flex-1 overflow-y-auto overflow-x-auto bg-muted/30 p-4">
+                                {isPdfLoading && (
+                                    <div className="flex h-full items-center justify-center gap-2 text-sm text-muted-foreground">
+                                        <Loader2 className="h-4 w-4 animate-spin" /> Loading document…
+                                    </div>
+                                )}
+                                {pdfError && <p className="p-6 text-center text-sm text-destructive">{pdfError}</p>}
+                                {pdfDocument && !pdfError && (
+                                    <div className="flex min-w-full flex-col items-center gap-4">
+                                        {Array.from({ length: pdfPageCount }, (_, index) => index + 1).map((pageNumber) => (
+                                            <canvas
+                                                key={pageNumber}
+                                                ref={(canvas) => { canvasRefs.current[pageNumber] = canvas; }}
+                                                className="rounded bg-white shadow-sm"
+                                                style={{ maxWidth: pdfZoom <= 1 ? '100%' : 'none' }}
+                                            />
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </section>
                     </div>
                 ) : (
                 <>
@@ -225,60 +296,8 @@ export default function SalaryDetailModal({ salaryId, onClose }: SalaryDetailMod
                     </div>
                 </div>
 
-                <div className="p-6 space-y-6">
-                    {/* Breakdown List */}
-                    <div className="space-y-4">
-                        {payments.length > 0 && (
-                            <div>
-                                <h4 className="text-xs font-semibold text-muted-foreground uppercase mb-2">Earnings (Devengos)</h4>
-                                <div className="space-y-2">
-                                    {payments.map((item, i) => (
-                                        <div key={i} className="flex justify-between text-sm">
-                                            <span>{item.concept}</span>
-                                            <span className="font-medium">€{item.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        {deductions.length > 0 && (
-                            <div>
-                                <h4 className="text-xs font-semibold uppercase mb-2 text-rose-500">Deductions</h4>
-                                <div className="space-y-2">
-                                    {deductions.map((item, i) => (
-                                        <div key={i} className="flex justify-between text-sm text-muted-foreground">
-                                            <span>{item.concept}</span>
-                                            <span className="text-rose-500">- €{item.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        {(payments.length === 0 && deductions.length === 0) && (
-                            <p className="text-sm text-muted-foreground italic text-center py-4">No breakdown details available.</p>
-                        )}
-                    </div>
-
-                    <div className="border-t pt-4 border-dashed">
-                        <div className="flex justify-between items-center text-sm text-muted-foreground mb-1">
-                            <span>Gross Total</span>
-                            <span>€{data.grossSalary?.toLocaleString('en-US', { minimumFractionDigits: 2 }) || '0.00'}</span>
-                        </div>
-                        <div className="flex justify-between items-center text-2xl font-bold bg-muted/30 p-4 rounded-lg mt-2">
-                            <span>Net Pay</span>
-                            <span className="text-emerald-600">€{data.netSalary?.toLocaleString('en-US', { minimumFractionDigits: 2 }) || '0.00'}</span>
-                        </div>
-                    </div>
-
-                    {data.notes && (
-                        <div className="text-sm bg-yellow-50 dark:bg-yellow-900/10 p-3 rounded-md text-yellow-800 dark:text-yellow-200 border border-yellow-100 dark:border-yellow-900/20">
-                            <p className="text-xs font-bold uppercase opacity-50 mb-1">Notes</p>
-                            {data.notes}
-                        </div>
-                    )}
-
+                {detailsContent}
+                <div className="px-6 pb-6">
                     {data.fileName && (
                         <Button variant="outline" className="w-full gap-2 h-12" onClick={openPdf}>
                             <FileText className="w-4 h-4 text-primary" />
