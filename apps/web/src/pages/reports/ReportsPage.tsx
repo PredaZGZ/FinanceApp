@@ -306,8 +306,8 @@ export default function ReportsPage() {
                     valueClassName={(data.portfolio.totalRealizedGain ?? 0) >= 0 ? "text-emerald-600" : "text-red-600"}
                 />
                 <MetricCard
-                    title="Nómina neta anual"
-                    value={formatCurrency(salaryMetrics.net)}
+                    title="Annual Gross Salary"
+                    value={formatCurrency(salaryMetrics.gross)}
                     description={`${salaryMetrics.count} nóminas en ${new Date().getFullYear()}`}
                     icon={Banknote}
                 />
