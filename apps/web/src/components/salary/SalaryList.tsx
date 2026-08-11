@@ -30,7 +30,7 @@ export default function SalaryList({ refreshTrigger, onView, onEdit }: SalaryLis
     const fetchSalaries = async () => {
         try {
             setLoading(true);
-            const res = await fetchAPI<SalaryListResponse>('/salary');
+            const res = await fetchAPI<SalaryListResponse>('/salary?limit=100');
             setSalaries(res.data);
         } catch (error) {
             console.error(error);
